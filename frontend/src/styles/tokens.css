@@ -1,0 +1,113 @@
+/*
+ * NrNMusic design tokens.
+ *
+ * Rules from the design brief:
+ *  - the base background is absolute black #000000,
+ *  - green is never used as an accent,
+ *  - surfaces are a small ladder of very dark neutrals, not one flat black plane.
+ *
+ * Every value below can be overridden at runtime from Settings, which writes
+ * custom properties on :root.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #000000;
+  --surface-1: #080a09;
+  --surface-2: #101312;
+  --surface-3: #191d1b;
+  --surface-raised: #1f2422;
+  --surface-overlay: rgba(16, 19, 18, 0.94);
+
+  /* Lines and depth */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --hairline: rgba(255, 255, 255, 0.06);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.7);
+
+  /* Text */
+  --text: #f4f6f5;
+  --text-muted: #a3aba7;
+  --text-faint: #6f7873;
+  --text-on-accent: #140805;
+
+  /* Accents — customisable, defaults are warm (never green) */
+  --accent: #ff5c35;
+  --accent-2: #4cc2ff;
+  --accent-soft: rgba(255, 92, 53, 0.16);
+  --accent-soft-2: rgba(76, 194, 255, 0.14);
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 30px;
+  --radius-pill: 999px;
+  --card-shape: 14px;
+
+  /* Spacing / density */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --content-gap: 24px;
+  --row-height: 56px;
+
+  /* Typography */
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-3xl: 34px;
+  --leading-tight: 1.15;
+  --leading-normal: 1.45;
+
+  /* Motion */
+  --motion-duration: 1;
+  --spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: calc(140ms * var(--motion-duration));
+  --dur-base: calc(240ms * var(--motion-duration));
+  --dur-slow: calc(420ms * var(--motion-duration));
+
+  /* Layout */
+  --nav-height: 64px;
+  --mini-player-height: 64px;
+  --content-max: 1180px;
+  --art-size: 40px;
+
+  /* Effects (toggled from Settings) */
+  --blur-strength: 14px;
+  --card-opacity: 1;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f7f6;
+  --surface-1: #ffffff;
+  --surface-2: #f0f2f1;
+  --surface-3: #e6e9e8;
+  --surface-raised: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+  --border: rgba(10, 14, 12, 0.1);
+  --border-strong: rgba(10, 14, 12, 0.18);
+  --hairline: rgba(10, 14, 12, 0.07);
+  --text: #10130f;
+  --text-muted: #4e5652;
+  --text-faint: #79817c;
+  --text-on-accent: #ffffff;
+  --shadow-1: 0 1px 2px rgba(16, 19, 15, 0.08);
+  --shadow-2: 0 12px 32px rgba(16, 19, 15, 0.12);
+  --shadow-3: 0 24px 64px rgba(16, 19, 15, 0.16);
+}
