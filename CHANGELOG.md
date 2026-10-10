@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 — 2026-10-10
+
+Automatic backend discovery for the Android app — no IP typing.
+
+### Added
+- Backend UDP discovery beacon (`backend/app/discovery.py`): broadcasts `{"app":"nrnmusic","port":8000,"name":"<host>"}` to `255.255.255.255` and the directed broadcast every 2 s while the API runs. Enabled by default; tune with `DISCOVERY_ENABLED`, `DISCOVERY_PORT` (47855), `DISCOVERY_INTERVAL`.
+- Native Capacitor plugin `LanDiscovery` (`frontend/android/.../LanDiscoveryPlugin.java`): listens on UDP 47855 for beacons and reports the device's own IPv4 (`localIp`) so the app can bound a subnet scan.
+- Frontend `src/lib/discovery.ts`: tries the UDP beacon first, falls back to a bounded-concurrency sweep of the device's /24 on port 8000 probing `/api/health`; first healthy base is persisted via `setApiBase`.
+- Boot-time auto-connect (`main.tsx`): native builds discover the backend **before** first paint, so the app opens connected instead of showing "Backend tidak terjangkau".
+- Home error screen retry now re-runs discovery before reloading.
+
+### Changed
+- `HOST` now defaults to `0.0.0.0` so phones on the LAN can actually reach the API (a loopback bind made discovery useless).
+- Stream proxy now follows upstream redirects (`follow_redirects=True`): the CDN sometimes answers 302 to a stale host, which was previously relayed to the browser as a non-audio response.
+- `capacitor.config.ts` sets `android.allowMixedContent` so the `https://localhost` WebView can call `http://<lan-ip>:8000`.
+- Settings → Server still allows a manual override; auto-discovery only fills the base when none is set or the current one is unreachable.
+
 ## 0.2.0 — 2026-10-10
 
 Android build + CI automation.

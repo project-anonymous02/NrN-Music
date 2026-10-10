@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
+from .discovery import DiscoveryBeacon
 from .errors import ApiError, RateLimited, api_error_handler, unhandled_error_handler
 from .routers import catalog, health, lyrics, search, stream
 
@@ -32,7 +33,13 @@ FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     log.info("NrNMusic API starting (region=%s, language=%s)", settings.region, settings.language)
-    yield
+    beacon = DiscoveryBeacon(settings.discovery_port, settings.discovery_interval)
+    if settings.discovery_enabled:
+        beacon.start()
+    try:
+        yield
+    finally:
+        beacon.stop()
     log.info("NrNMusic API stopped")
 
 

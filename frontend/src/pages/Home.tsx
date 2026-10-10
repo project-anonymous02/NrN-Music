@@ -7,6 +7,7 @@ import { TrackRow } from "../components/TrackRow";
 import { useT } from "../hooks/useT";
 import { api, type SearchResponse } from "../lib/api";
 import { artistNames } from "../lib/format";
+import { ensureBackend } from "../lib/discovery";
 import { rankCandidates, reasonLabel, summarize } from "../lib/recommend";
 import { useAsync } from "../lib/useAsync";
 import { useHistory } from "../stores/history";
@@ -80,7 +81,13 @@ export function HomePage() {
   if (error) {
     return (
       <div className="page">
-        <ErrorState title={t("error.offline")} body={t("error.offlineBody")} onRetry={reload} />
+        <ErrorState
+          title={t("error.offline")}
+          body={t("error.offlineBody")}
+          onRetry={() => {
+            void ensureBackend().finally(reload);
+          }}
+        />
       </div>
     );
   }

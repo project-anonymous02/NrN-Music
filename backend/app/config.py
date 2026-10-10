@@ -25,7 +25,9 @@ class Settings:
 
     def __init__(self) -> None:
         self.app_name = "NrNMusic API"
-        self.host = os.getenv("HOST", "127.0.0.1")
+        # Bind all interfaces by default: the Android app discovers this
+        # backend on the LAN, so a loopback-only bind would be unreachable.
+        self.host = os.getenv("HOST", "0.0.0.0")
         self.port = int(os.getenv("PORT", "8000"))
         self.log_level = os.getenv("LOG_LEVEL", "info").lower()
 
@@ -53,6 +55,12 @@ class Settings:
         self.rate_limit_per_minute = int(os.getenv("RATE_LIMIT_PER_MINUTE", "240"))
         self.enable_stream_redirect = _bool(os.getenv("ENABLE_STREAM_REDIRECT", "1"), True)
         self.proxy_stream = _bool(os.getenv("PROXY_STREAM", "1"), True)
+
+        # LAN discovery beacon (UDP) so the Android app finds this backend
+        # without the user typing an IP address.
+        self.discovery_enabled = _bool(os.getenv("DISCOVERY_ENABLED", "1"), True)
+        self.discovery_port = int(os.getenv("DISCOVERY_PORT", "47855"))
+        self.discovery_interval = float(os.getenv("DISCOVERY_INTERVAL", "2"))
 
     @property
     def version(self) -> str:

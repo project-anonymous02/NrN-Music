@@ -87,9 +87,11 @@ cd android && ./gradlew assembleDebug      # output: app/build/outputs/apk/debug
 
 Prasyarat lokal: JDK 21 + Android SDK (platform 36). Alternatif tanpa setup lokal: jalankan **GitHub Actions** — job `android` di `.github/workflows/ci.yml` membangun `NrNMusic-debug-<sha>.apk` di setiap push ke `main` dan mengunggahnya sebagai artifact **`NrNMusic-debug-apk`** (tab Actions → pilih run → bagian Artifacts).
 
-Setelah APK terpasang:
-1. Buka **Settings → Server**, isi URL backend, contoh `http://192.168.1.10:8000`, lalu *Save server*.
-2. Jalankan backend di PC: `uvicorn app.main:app --host 0.0.0.0 --port 8000` (origin Capacitor sudah termasuk di default `CORS_ORIGINS`; traffic HTTP ke LAN diizinkan lewat `usesCleartextTraffic`).
+Setelah APK terpasang, **tidak perlu mengisi IP apa pun**. Saat backend berjalan di PC yang sama (Wi-Fi yang sama), aplikasi otomatis menemukannya:
+
+1. Jalankan backend di PC: `uvicorn app.main:app --host 0.0.0.0 --port 8000` (`HOST` default sudah `0.0.0.0`). Backend menyiar beacon UDP setiap 2 detik.
+2. Buka APK — aplikasi mencari backend (beacon UDP, lalu pemindaian subnet Wi-Fi sebagai cadangan) dan langsung terhubung.
+3. Kalau otomatis gagal (terlalu banyak jaringan/VPN), isi manual di **Settings → Server**, contoh `http://192.168.1.10:8000`.
 
 Catatan: build debug dipakai karena butuh tanpa keystore. Rilis Play Store butuh keystore + signing config sendiri.
 

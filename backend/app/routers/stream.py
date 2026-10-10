@@ -70,7 +70,9 @@ async def stream(video_id: str, request: Request, ext: str = Query(default="auto
     # StreamingResponse *after* we return, so it is closed by the generator
     # below instead of by a context manager here (that would abort the body
     # after the first chunk and break Content-Length).
-    client = httpx.AsyncClient(timeout=timeout, follow_redirects=False)
+    # follow_redirects=True: the CDN sometimes answers 302 to a stale host;
+    # without it we would relay that redirect to the browser instead of audio.
+    client = httpx.AsyncClient(timeout=timeout, follow_redirects=True)
     try:
         response = await _fetch(client, info.url, request)
 
