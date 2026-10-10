@@ -4,6 +4,7 @@ import { useT } from "../hooks/useT";
 import { LOCALES } from "../i18n";
 import { estimateStorage } from "../lib/db";
 import { formatBytes } from "../lib/format";
+import { getApiBase, setApiBase } from "../lib/api";
 import {
   PRESETS,
   defaultSettings,
@@ -115,6 +116,8 @@ export function SettingsPage() {
   const settingsFile = useRef<HTMLInputElement>(null);
   const libraryFile = useRef<HTMLInputElement>(null);
   const [storage, setStorage] = useState<{ usage: number; quota: number } | null>(null);
+  const [serverDraft, setServerDraft] = useState(getApiBase());
+  const [serverSaved, setServerSaved] = useState(getApiBase());
 
   useEffect(() => {
     void estimateStorage().then(setStorage);
@@ -469,6 +472,49 @@ export function SettingsPage() {
           >
             {t("settings.resetRecommendations")}
           </button>
+        </Row>
+      </section>
+
+      {/* ---------------------------------------------------------------- server */}
+      <section className="settings-group">
+        <h3>{t("settings.server")}</h3>
+        <Row label={t("settings.apiBase")} desc={t("settings.apiBaseHint")}>
+          <input
+            className="hex-input"
+            type="url"
+            inputMode="url"
+            placeholder="http://192.168.1.10:8000"
+            aria-label={t("settings.apiBase")}
+            value={serverDraft}
+            onChange={(event) => setServerDraft(event.target.value)}
+            style={{ width: "min(320px, 46vw)" }}
+          />
+        </Row>
+        <Row label={t("settings.apiBaseSave")} desc={serverSaved || t("settings.apiBaseSameOrigin")}>
+          <div className="list-manage-buttons">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setApiBase(serverDraft);
+                setServerSaved(getApiBase());
+                toast(t("settings.apiBaseSaved"));
+              }}
+            >
+              {t("settings.apiBaseSave")}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setServerDraft("");
+                setApiBase("");
+                setServerSaved("");
+              }}
+            >
+              {t("settings.apiBaseReset")}
+            </button>
+          </div>
         </Row>
       </section>
 

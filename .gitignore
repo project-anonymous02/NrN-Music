@@ -14,5 +14,15 @@ backend/.env
 .coverage
 htmlcov/
 
+# Android / Capacitor build outputs (the wrapper project itself IS committed)
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/app/src/main/assets/public/
+frontend/android/app/src/main/assets/capacitor.config.json
+frontend/android/captures/
+frontend/android/.idea/
+*.iml
+
 # local task spec, not product source
 jalanin prompt ini.txt

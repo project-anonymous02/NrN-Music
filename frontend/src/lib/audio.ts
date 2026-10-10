@@ -49,7 +49,6 @@ class AudioEngine {
     if (this.element) return this.element;
     const el = typeof Audio !== "undefined" ? new Audio() : document.createElement("audio");
     el.preload = "auto";
-    el.crossOrigin = "anonymous";
     el.addEventListener("loadstart", () => this.emit({ type: "state", state: "loading" }));
     el.addEventListener("waiting", () => this.emit({ type: "state", state: "waiting" }));
     el.addEventListener("playing", () => this.emit({ type: "state", state: "playing" }));
@@ -84,6 +83,11 @@ class AudioEngine {
     if (this.currentSrc !== src) {
       this.currentSrc = src;
       this.retried = false;
+      // Same-origin streams opt into CORS (canvas/metadata reads). A remote
+      // API base (Android build) plays as ordinary cross-origin media.
+      const sameOrigin = new URL(src, window.location.href).origin === window.location.origin;
+      if (sameOrigin) el.crossOrigin = "anonymous";
+      else el.removeAttribute("crossorigin");
       el.src = src;
       el.load();
     }

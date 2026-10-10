@@ -81,6 +81,59 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  # Builds the Android wrapper (Capacitor) into an installable debug APK.
+  # Skipped on pull requests to keep PR feedback fast; runs on main pushes and
+  # manual dispatch.
+  android:
+    name: Android APK (Capacitor)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-36"
+
+      - name: Build web app
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Sync web assets into the Android project
+        working-directory: frontend
+        run: npx cap sync android
+
+      - name: Assemble debug APK
+        working-directory: frontend/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Name the artifact
+        run: cp frontend/android/app/build/outputs/apk/debug/app-debug.apk "NrNMusic-debug-${GITHUB_SHA:0:7}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NrNMusic-debug-apk
+          path: NrNMusic-debug-*.apk
+          retention-days: 14
+          if-no-files-found: error
+
   # Real browser + real YouTube Music. Runs on manual dispatch only, because it
   # depends on external network availability; push/PR CI stays hermetic.
   e2e:

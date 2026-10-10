@@ -35,8 +35,36 @@ export interface Suggestion {
   track?: Track;
 }
 
+const API_BASE_KEY = "nrn:apiBase";
+
+function normalizeBase(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const trimmed = raw.trim().replace(/\/+$/, "");
+  if (!trimmed || trimmed === window.location.origin) return "";
+  return trimmed;
+}
+
+/** Absolute base URL of the backend, or "" for same-origin (web builds). */
+let apiBase = normalizeBase(localStorage.getItem(API_BASE_KEY) || (import.meta.env.VITE_API_BASE as string | undefined));
+
+export function getApiBase(): string {
+  return apiBase;
+}
+
+/** Persist a new backend origin ("" = same origin) and take effect immediately. */
+export function setApiBase(base: string): void {
+  const normalized = normalizeBase(base);
+  apiBase = normalized;
+  if (normalized) localStorage.setItem(API_BASE_KEY, normalized);
+  else localStorage.removeItem(API_BASE_KEY);
+}
+
+function apiUrl(path: string): string {
+  return apiBase ? `${apiBase}${path}` : new URL(path, window.location.origin).toString();
+}
+
 async function request<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
-  const url = new URL(path, window.location.origin);
+  const url = new URL(apiUrl(path));
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
@@ -130,5 +158,5 @@ export const api = {
 
   streamMeta: (videoId: string, ext = "auto") => request<StreamMeta>(`/api/stream/${videoId}/meta`, { ext }),
 
-  streamUrl: (videoId: string) => `/api/stream/${videoId}`,
+  streamUrl: (videoId: string) => apiUrl(`/api/stream/${videoId}`),
 };

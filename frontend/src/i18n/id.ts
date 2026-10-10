@@ -137,6 +137,13 @@ export const id: Dictionary = {
   "settings.storage": "Koleksi & Penyimpanan",
   "settings.data": "Manajemen Data",
   "settings.general": "Umum",
+  "settings.server": "Server",
+  "settings.apiBase": "URL server API",
+  "settings.apiBaseHint": "Alamat backend yang dipakai aplikasi ini. Kosong = same origin (build web).",
+  "settings.apiBaseSameOrigin": "Same origin (default)",
+  "settings.apiBaseSave": "Simpan server",
+  "settings.apiBaseReset": "Kembali ke same origin",
+  "settings.apiBaseSaved": "Server tersimpan",
   "settings.about": "Tentang NrNMusic",
 
   "settings.backgroundColor": "Warna latar",

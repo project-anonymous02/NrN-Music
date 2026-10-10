@@ -74,6 +74,25 @@ location / {
 }
 ```
 
+### 4. Android (APK)
+
+Wrapper [Capacitor](https://capacitorjs.com) ada di `frontend/android`. Web asset dibundel ke dalam APK; APK **tidak** membawa backend — dia butuh server NrNMusic yang bisa dijangkau (PC/VPS di LAN yang sama).
+
+```bash
+cd frontend
+npm ci && npm run build
+npx cap sync android
+cd android && ./gradlew assembleDebug      # output: app/build/outputs/apk/debug/app-debug.apk
+```
+
+Prasyarat lokal: JDK 21 + Android SDK (platform 36). Alternatif tanpa setup lokal: jalankan **GitHub Actions** — job `android` di `.github/workflows/ci.yml` membangun `NrNMusic-debug-<sha>.apk` di setiap push ke `main` dan mengunggahnya sebagai artifact **`NrNMusic-debug-apk`** (tab Actions → pilih run → bagian Artifacts).
+
+Setelah APK terpasang:
+1. Buka **Settings → Server**, isi URL backend, contoh `http://192.168.1.10:8000`, lalu *Save server*.
+2. Jalankan backend di PC: `uvicorn app.main:app --host 0.0.0.0 --port 8000` (origin Capacitor sudah termasuk di default `CORS_ORIGINS`; traffic HTTP ke LAN diizinkan lewat `usesCleartextTraffic`).
+
+Catatan: build debug dipakai karena butuh tanpa keystore. Rilis Play Store butuh keystore + signing config sendiri.
+
 ## Konfigurasi
 
 Salin `.env.example` ke `backend/.env`. Variabel penting:

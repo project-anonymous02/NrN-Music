@@ -133,6 +133,13 @@ export const en = {
   "settings.storage": "Library & Storage",
   "settings.data": "Data Management",
   "settings.general": "General",
+  "settings.server": "Server",
+  "settings.apiBase": "API server URL",
+  "settings.apiBaseHint": "Backend address this app talks to. Empty means same origin (web build).",
+  "settings.apiBaseSameOrigin": "Same origin (default)",
+  "settings.apiBaseSave": "Save server",
+  "settings.apiBaseReset": "Back to same origin",
+  "settings.apiBaseSaved": "Server saved",
   "settings.about": "About NrNMusic",
 
   "settings.backgroundColor": "Background color",

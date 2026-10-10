@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0 — 2026-10-10
+
+Android build + CI automation.
+
+### Added
+- Capacitor 8 Android wrapper (`frontend/android`, appId `com.nrnmusic.app`, minSdk 24, target/compileSdk 36) bundling the built SPA.
+- Configurable backend address: **Settings → Server** stores `nrn:apiBase` in localStorage; `api.ts` prefixes every request and stream URL with it (empty = same origin, web builds unchanged).
+- CI job `android` in `.github/workflows/ci.yml`: JDK 21 + Gradle + SDK platform 36, `npx cap sync android`, `./gradlew assembleDebug`, uploads `NrNMusic-debug-<sha>.apk` as the `NrNMusic-debug-apk` artifact (push to `main` and manual dispatch; skipped on PRs).
+- `NRN_CHROME` env in `scripts/e2e_smoke.py` so the E2E job can use the runner's `google-chrome`.
+
+### Changed
+- CORS defaults now include the Capacitor WebView origins (`capacitor://localhost`, `https://localhost`, `http://localhost`).
+- Audio engine sets `crossOrigin` only for same-origin streams; a remote API base plays as ordinary cross-origin media.
+
 ## 0.1.0 — 2026-10-10
 
 Initial build of NrNMusic: a Spotify-inspired player/streaming app over YouTube Music metadata.

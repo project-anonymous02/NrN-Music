@@ -33,7 +33,12 @@ class Settings:
         self.region = os.getenv("YT_REGION", "US").strip().upper() or "US"
         self.language = os.getenv("YT_LANGUAGE", "en").strip().lower() or "en"
 
-        origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+        # Dev server origins plus the Capacitor WebView origins used by the
+        # Android build (androidScheme https -> https://localhost).
+        origins = os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173,capacitor://localhost,https://localhost,http://localhost",
+        )
         self.cors_origins: tuple[str, ...] = _split_csv(origins)
 
         self.metadata_cache_ttl = float(os.getenv("METADATA_CACHE_TTL", "300"))
