@@ -86,7 +86,7 @@ cd native-android
 ./gradlew :app:assembleFossDebug           # output under app/build/outputs/apk/universalFoss/debug/
 ```
 
-Prasyarat lokal: JDK 21 + Android SDK platform 36. GitHub Actions membangun APK native pada push ke `main` dan manual dispatch, lalu mengunggah artifact **`NrNMusic-debug-apk`** (tab Actions → pilih run → bagian Artifacts). Backend FastAPI tetap dipakai hanya untuk deployment web lama; Android tidak memakai API FastAPI atau Capacitor.
+Prasyarat lokal: JDK 21 + Android SDK platform 37 (preview channel). GitHub Actions membangun APK native pada push ke `main` dan manual dispatch, lalu mengunggah artifact **`NrNMusic-debug-apk`** (tab Actions → pilih run → bagian Artifacts). Backend FastAPI tetap dipakai hanya untuk deployment web lama; Android tidak memakai API FastAPI atau Capacitor.
 
 Catatan: artifact Actions adalah build debug. Rilis distribusi memerlukan signing config yang dikelola pemilik project. Kode aplikasi Android turunan dan dependensi InnerTubeX berlisensi GPL-3.0; lihat `native-android/LICENSE` dan `native-android/FORK_NOTICE.md`.
 
