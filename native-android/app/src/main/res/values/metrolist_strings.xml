@@ -250,7 +250,7 @@
     <string name="release_notes">Release notes</string>
     <string name="changelog">Changelog</string>
     <string name="changelog_empty">No changelogs available</string>
-    <string name="github_releases_url">https://github.com/project-anonymous02/NrN-Music/releases</string>
+    <string name="github_releases_url">https://github.com/project-anonymous02/NrN-Music</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">View on GitHub</string>
     <string name="current_version">Current version</string>
@@ -859,10 +859,17 @@
     <string name="credits_view_repo">View repository</string>
     <string name="buy_mo_a_coffee">Buy me a coffee!</string>
     <string name="community_and_info">Community &amp; Info</string>
-    <string name="metrolist">NRNMUSIC</string>
+    <string name="metrolist">NrNMusic</string>
     <string name="wanna_play_favorite_song">Want to play their favorite song?</string>
     <string name="yeah">Yeah!</string>
     <string name="stands_with_palestine">This project stands with Palestine 🇵🇸</string>
+    <string name="nata_about_heading">Made by Nata</string>
+    <string name="nata_about_project">Project Nata</string>
+    <string name="nata_about_description">Yap, benar—Nur Rasa Natakusuma. NrNMusic started as my personal project: a simple place to find music and enjoy it at your own pace. Thanks for being here!</string>
+    <string name="nrnmusic_open_source_note">NrNMusic includes open-source components from Metrolist and other projects. Portions derived from Metrolist are licensed under GPL-3.0; see the license for details.</string>
+    <string name="project_links">Project links</string>
+    <string name="home_welcome_title">Hello, music lover! 👐</string>
+    <string name="home_welcome_message">Welcome to NrNMusic. Nata made this app, and it uses third-party APIs to help you discover music. Please use it thoughtfully, and enjoy listening!</string>
 
     <!-- Podcasts -->
     <string name="filter_podcasts">Podcasts</string>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="metrolist">NrNMusic</string>
+    <string name="github_releases_url">https://github.com/project-anonymous02/NrN-Music</string>
+    <string name="credits_view_repo">Lihat repositori</string>
+    <string name="credits_license_name">GNU General Public License v3.0</string>
+    <string name="credits_license_desc">Perangkat lunak bebas dan sumber terbuka. Kode turunan Metrolist tetap mengikuti lisensi GPL-3.0.</string>
+    <string name="project_links">Tautan proyek</string>
+    <string name="nata_about_heading">Made by Nata</string>
+    <string name="nata_about_project">Project Nata</string>
+    <string name="nata_about_description">Yap, benar—Nur Rasa Natakusuma. NrNMusic aku buat sebagai proyek pribadi untuk menikmati musik dengan cara yang sederhana. Terima kasih sudah mampir!</string>
+    <string name="nrnmusic_open_source_note">NrNMusic memakai komponen sumber terbuka dari Metrolist dan proyek lainnya. Bagian kode turunan Metrolist berlisensi GPL-3.0; silakan lihat lisensinya.</string>
+    <string name="home_welcome_title">Halo, teman musik! 👐</string>
+    <string name="home_welcome_message">Selamat datang di NrNMusic. Aplikasi ini dibuat oleh Nata dan menggunakan API pihak ketiga untuk membantu kamu menemukan musik. Gunakan dengan bijak, ya—selamat menikmati musik favoritmu!</string>
+    <string name="about">Tentang</string>
+</resources>
