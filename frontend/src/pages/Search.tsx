@@ -1,13 +1,16 @@
 import { Search as SearchIcon, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MediaCard } from "../components/MediaCard";
-import { EmptyState, ErrorState, SkeletonRows } from "../components/States";
+import { EmptyState, SkeletonRows } from "../components/States";
 import { TrackRow } from "../components/TrackRow";
 import { useT } from "../hooks/useT";
 import { api, type SearchResponse, type Suggestion } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useHistory } from "../stores/history";
 import type { AlbumItem, ArtistItem, PlaylistItem, Track } from "../types";
+import { listLocalTracks, localToTrack, type LocalTrack } from "../lib/localMusic";
+import { useLibrary } from "../stores/library";
+import { Link } from "react-router-dom";
 
 const FILTERS: { value: string; key: "filter.all" | "filter.songs" | "filter.artists" | "filter.albums" | "filter.playlists" }[] = [
   { value: "all", key: "filter.all" },
@@ -28,6 +31,15 @@ export function SearchPage() {
   const searches = useHistory((state) => state.searches);
   const recordSearch = useHistory((state) => state.recordSearch);
   const clearSearches = useHistory((state) => state.clearSearches);
+  const liked = useLibrary((state) => state.liked);
+  const playlists = useLibrary((state) => state.playlists);
+  const [localFiles, setLocalFiles] = useState<LocalTrack[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void listLocalTracks().then((files) => active && setLocalFiles(files));
+    return () => { active = false; };
+  }, []);
 
   const debouncedQuery = useDebounced(query, 320);
 
@@ -51,11 +63,28 @@ export function SearchPage() {
     [submitted, filter],
   );
 
+  useEffect(() => {
+    window.addEventListener("nrn:backend-found", reload);
+    return () => window.removeEventListener("nrn:backend-found", reload);
+  }, [reload]);
+
   const results = data?.results ?? [];
   const tracks = useMemo(
     () => results.filter((entry) => entry.kind === "track").map((entry) => entry.item as Track),
     [results],
   );
+  const localMatches = useMemo(() => {
+    const query = submitted.trim().toLocaleLowerCase();
+    if (!query) return [];
+    const indexed = [
+      ...localFiles.map(localToTrack),
+      ...liked.filter((track) => track.source === "local"),
+      ...playlists.flatMap((playlist) => playlist.tracks.filter((track) => track.source === "local")),
+    ];
+    return Array.from(new Map(indexed.map((track) => [track.id, track])).values()).filter((track) =>
+      `${track.title} ${track.artists.map((artist) => artist.name).join(" ")}`.toLocaleLowerCase().includes(query),
+    );
+  }, [liked, localFiles, playlists, submitted]);
 
   const runSearch = (value: string) => {
     const trimmed = value.trim();
@@ -166,7 +195,29 @@ export function SearchPage() {
           </div>
 
           {loading && <SkeletonRows count={6} />}
-          {error && <ErrorState title={t("search.error")} body={error.message} onRetry={reload} />}
+          {error && (
+            <section className="offline-note search-offline" role="status">
+              <span className="offline-indicator" aria-hidden="true" />
+              <div>
+                <strong>{t("search.localOnly")}</strong>
+                <p>{t("search.localHint")}</p>
+              </div>
+              <Link to="/settings" className="btn compact">{t("settings.title")}</Link>
+            </section>
+          )}
+
+          {error && localMatches.length > 0 && (
+            <section className="section">
+              <div className="section-head"><h2 className="section-title">{t("home.onDevice")}</h2></div>
+              <div className="list">
+                {localMatches.map((track) => <TrackRow key={track.id} track={track} tracks={localMatches} />)}
+              </div>
+            </section>
+          )}
+
+          {error && localMatches.length === 0 && (
+            <EmptyState title={t("search.noLocalResults")} body={t("search.localHint")} />
+          )}
 
           {!loading && !error && results.length === 0 && (
             <EmptyState title={t("search.noResults")} body={t("search.noResultsBody")} />

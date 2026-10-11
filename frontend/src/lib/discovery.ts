@@ -41,7 +41,7 @@ export async function probeBackend(base: string, timeoutMs = 2500): Promise<bool
   }
 }
 
-async function scanByBeacon(timeoutMs = 4000): Promise<string | null> {
+async function scanByBeacon(timeoutMs = 1800): Promise<string | null> {
   if (!isNative()) return null;
   try {
     const { beacons } = await LanDiscovery.scan({ timeoutMs, port: BEACON_PORT });
@@ -92,8 +92,13 @@ export async function scanSubnet(localIp: string | null): Promise<string | null>
   return found;
 }
 
-export async function discoverBackend(): Promise<string | null> {
-  return (await scanByBeacon()) ?? (await scanSubnet(await localIpv4()));
+export async function discoverBackend(options: { fallbackToSubnet?: boolean } = {}): Promise<string | null> {
+  const current = getApiBase();
+  if (current && (await probeBackend(current, 1200))) return current;
+
+  const beacon = await scanByBeacon();
+  if (beacon || options.fallbackToSubnet === false) return beacon;
+  return scanSubnet(await localIpv4());
 }
 
 /** Returns true when requests can reach a backend (existing base or discovered). */

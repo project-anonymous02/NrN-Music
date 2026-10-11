@@ -18,13 +18,6 @@ async function boot() {
 
   usePlayer.getState().init();
 
-  // Native builds have no same-origin backend: find it on the LAN first so
-  // the first paint already has data instead of an error screen.
-  if (isNative()) {
-    const found = await discoverBackend();
-    if (found) setApiBase(found);
-  }
-
   const container = document.getElementById("root");
   if (!container) return;
 
@@ -50,6 +43,18 @@ async function boot() {
       </BrowserRouter>
     </StrictMode>,
   );
+
+  // Never hold the first paint while searching the LAN. A saved server is
+  // checked first; a short beacon scan can connect in the background.
+  if (isNative()) {
+    void (async () => {
+      const found = await discoverBackend({ fallbackToSubnet: false });
+      if (found) {
+        setApiBase(found);
+        window.dispatchEvent(new Event("nrn:backend-found"));
+      }
+    })();
+  }
 }
 
 void boot();

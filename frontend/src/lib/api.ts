@@ -72,10 +72,21 @@ async function request<T>(path: string, params?: Record<string, string | number 
   }
 
   let response: Response;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 12000);
   try {
-    response = await fetch(url.toString(), { headers: { accept: "application/json" } });
+    response = await fetch(url.toString(), { headers: { accept: "application/json" }, signal: controller.signal });
   } catch (cause) {
-    throw new ApiError("Could not reach the NrNMusic backend.", "network_error", 0, true);
+    throw new ApiError(
+      cause instanceof DOMException && cause.name === "AbortError"
+        ? "The music service did not respond in time."
+        : "Could not reach the NrNMusic backend.",
+      cause instanceof DOMException && cause.name === "AbortError" ? "timeout" : "network_error",
+      0,
+      true,
+    );
+  } finally {
+    window.clearTimeout(timeout);
   }
 
   const isJson = response.headers.get("content-type")?.includes("application/json");

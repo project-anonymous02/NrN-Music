@@ -103,6 +103,94 @@ img {
   animation: none;
 }
 
+.page-offline .page-header {
+  margin-bottom: 20px;
+}
+
+.offline-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  margin-bottom: 28px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.offline-note > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.offline-note strong,
+.offline-library-empty strong {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.offline-note p,
+.offline-library-empty p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.offline-indicator {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+
+.offline-library-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  color: var(--text-muted);
+}
+
+.offline-library-empty > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.offline-library-empty strong {
+  color: var(--text);
+}
+
+.offline-library-empty .btn,
+.offline-note .btn {
+  flex: 0 0 auto;
+}
+
+.btn.compact {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 420px) {
+  .offline-note {
+    gap: 9px;
+  }
+
+  .offline-note p {
+    max-width: 190px;
+  }
+
+  .offline-library-empty {
+    flex-wrap: wrap;
+  }
+
+  .offline-library-empty .btn {
+    margin-left: 32px;
+  }
+}
+
 :root[data-page-transition="1"][data-reduce-motion="0"] .page {
   animation: page-in var(--dur-base) var(--ease-out) both;
 }

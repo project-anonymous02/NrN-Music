@@ -7,6 +7,12 @@ export const en = {
   "home.greeting.morning": "Good morning",
   "home.greeting.afternoon": "Good afternoon",
   "home.greeting.evening": "Good evening",
+  "home.offlineTitle": "Online catalog isn't connected",
+  "home.offlineHint": "Music on your device is ready. Set up a server to browse online music.",
+  "home.onDevice": "On this device",
+  "home.noLocalMusic": "No local music yet",
+  "home.addLocalMusic": "Add audio files from your device to play them offline.",
+  "home.nothingPlayed": "Local listening history will appear here.",
   "home.discover.first": "Let's discover your first music",
   "home.discover.hint":
     "Search for an artist you love, or start from the charts below. Everything you play shapes your recommendations.",
@@ -27,6 +33,9 @@ export const en = {
 
   "search.placeholder": "Songs, artists, albums…",
   "search.title": "Search",
+  "search.localOnly": "Showing local results",
+  "search.localHint": "The online catalog isn't connected. Audio in your library is still searchable.",
+  "search.noLocalResults": "Nothing found on this device",
   "search.suggestions": "Suggestions",
   "search.recent": "Recent searches",
   "search.clearHistory": "Clear search history",

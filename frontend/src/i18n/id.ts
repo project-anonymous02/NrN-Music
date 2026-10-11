@@ -11,6 +11,12 @@ export const id: Dictionary = {
   "home.greeting.morning": "Selamat pagi",
   "home.greeting.afternoon": "Selamat siang",
   "home.greeting.evening": "Selamat malam",
+  "home.offlineTitle": "Katalog online belum tersambung",
+  "home.offlineHint": "Musik di perangkatmu tetap bisa diputar. Atur server untuk mencari musik online.",
+  "home.onDevice": "Musik di perangkat",
+  "home.noLocalMusic": "Belum ada musik lokal",
+  "home.addLocalMusic": "Tambahkan file audio dari perangkatmu untuk diputar tanpa koneksi.",
+  "home.nothingPlayed": "Riwayat putar lokal akan muncul di sini.",
   "home.discover.first": "Let's discover your first music",
   "home.discover.hint":
     "Cari artis yang kamu suka, atau mulai dari chart di bawah. Semua yang kamu putar membentuk rekomendasi.",
@@ -31,6 +37,9 @@ export const id: Dictionary = {
 
   "search.placeholder": "Lagu, artis, album…",
   "search.title": "Cari",
+  "search.localOnly": "Hasil lokal saja",
+  "search.localHint": "Katalog online belum tersambung. File audio di library tetap bisa dicari.",
+  "search.noLocalResults": "Tidak ditemukan di perangkat",
   "search.suggestions": "Saran",
   "search.recent": "Pencarian terakhir",
   "search.clearHistory": "Hapus riwayat pencarian",

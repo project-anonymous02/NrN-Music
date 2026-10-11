@@ -1,5 +1,12 @@
 package com.nrnmusic.app;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.LinkAddress;
+import android.net.LinkProperties;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.wifi.WifiManager;
 import android.util.Log;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -12,9 +19,7 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,19 +63,18 @@ public class LanDiscoveryPlugin extends Plugin {
 
     private String findLocalIp() {
         try {
-            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces != null && interfaces.hasMoreElements()) {
-                NetworkInterface nif = interfaces.nextElement();
-                if (nif.isLoopback() || !nif.isUp()) {
-                    continue;
-                }
-                Enumeration<InetAddress> addresses = nif.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress address = addresses.nextElement();
-                    if (address instanceof Inet4Address && !address.isLoopbackAddress()) {
-                        return address.getHostAddress();
-                    }
-                }
+            ConnectivityManager manager = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            Network network = manager != null ? manager.getActiveNetwork() : null;
+            NetworkCapabilities capabilities = network != null ? manager.getNetworkCapabilities(network) : null;
+            if (network == null || capabilities == null || !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                return null;
+            }
+
+            LinkProperties properties = manager.getLinkProperties(network);
+            if (properties == null) return null;
+            for (LinkAddress linkAddress : properties.getLinkAddresses()) {
+                InetAddress address = linkAddress.getAddress();
+                if (address instanceof Inet4Address && !address.isLoopbackAddress()) return address.getHostAddress();
             }
         } catch (Exception error) {
             Log.e(TAG, "localIp failed", error);
@@ -84,40 +88,54 @@ public class LanDiscoveryPlugin extends Plugin {
         long deadline = System.currentTimeMillis() + timeoutMs;
         byte[] buffer = new byte[1024];
 
-        try (DatagramSocket socket = new DatagramSocket(null)) {
-            socket.setReuseAddress(true);
-            socket.bind(new InetSocketAddress(port));
-            socket.setSoTimeout(500);
-            Log.i(TAG, "listening on udp/" + port);
+        WifiManager.MulticastLock multicastLock = null;
+        try {
+            WifiManager wifi = (WifiManager) getContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            if (wifi != null) {
+                multicastLock = wifi.createMulticastLock("nrnmusic-discovery");
+                multicastLock.setReferenceCounted(false);
+                multicastLock.acquire();
+            }
 
-            while (System.currentTimeMillis() < deadline) {
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                try {
-                    socket.receive(packet);
-                } catch (java.net.SocketTimeoutException e) {
-                    continue;
+            try (DatagramSocket socket = new DatagramSocket(null)) {
+                socket.setReuseAddress(true);
+                socket.bind(new InetSocketAddress(port));
+                socket.setSoTimeout(500);
+                Log.i(TAG, "listening on udp/" + port);
+
+                while (System.currentTimeMillis() < deadline) {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    try {
+                        socket.receive(packet);
+                    } catch (java.net.SocketTimeoutException e) {
+                        continue;
+                    }
+                    String text = new String(packet.getData(), packet.getOffset(), packet.getLength()).trim();
+                    if (!text.contains(MAGIC)) {
+                        continue;
+                    }
+                    String ip = packet.getAddress() != null ? packet.getAddress().getHostAddress() : null;
+                    if (ip == null || !seen.add(ip)) {
+                        continue;
+                    }
+                    JSObject item = new JSObject();
+                    item.put("ip", ip);
+                    try {
+                        JSONObject json = new JSONObject(text);
+                        item.put("port", json.optInt("port", 8000));
+                        item.put("name", json.optString("name", ""));
+                    } catch (Exception parseError) {
+                        item.put("port", 8000);
+                    }
+                    found.add(item);
                 }
-                String text = new String(packet.getData(), packet.getOffset(), packet.getLength()).trim();
-                if (!text.contains(MAGIC)) {
-                    continue;
-                }
-                String ip = packet.getAddress() != null ? packet.getAddress().getHostAddress() : null;
-                if (ip == null || !seen.add(ip)) {
-                    continue;
-                }
-                JSObject item = new JSObject();
-                item.put("ip", ip);
-                try {
-                    JSONObject json = new JSONObject(text);
-                    item.put("port", json.optInt("port", 8000));
-                    item.put("name", json.optString("name", ""));
-                } catch (Exception parseError) {
-                    item.put("port", 8000);
-                }
-                found.add(item);
             }
         } catch (Exception error) {
             Log.e(TAG, "discovery failed", error);
+        } finally {
+            if (multicastLock != null && multicastLock.isHeld()) {
+                multicastLock.release();
+            }
         }
 
         Log.i(TAG, "found " + found.size() + " backend(s)");

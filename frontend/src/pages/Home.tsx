@@ -1,18 +1,21 @@
-import { Clock, Settings as SettingsIcon, Sparkles } from "lucide-react";
-import { useMemo } from "react";
+import { Clock, Download, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
-import { SkeletonCards, SkeletonRows, ErrorState, EmptyState } from "../components/States";
+import { SkeletonCards, SkeletonRows, EmptyState } from "../components/States";
 import { TrackRow } from "../components/TrackRow";
 import { useT } from "../hooks/useT";
 import { api, type SearchResponse } from "../lib/api";
+import { getApiBase } from "../lib/api";
 import { artistNames } from "../lib/format";
 import { ensureBackend } from "../lib/discovery";
+import { isNative, probeBackend } from "../lib/discovery";
 import { rankCandidates, reasonLabel, summarize } from "../lib/recommend";
 import { useAsync } from "../lib/useAsync";
 import { useHistory } from "../stores/history";
 import { usePlayer } from "../stores/player";
 import { useSettings } from "../stores/settings";
+import { listLocalTracks, localToTrack, type LocalTrack } from "../lib/localMusic";
 import type { HomeSection, PlaylistItem, Track } from "../types";
 
 type HomeData = {
@@ -33,10 +36,14 @@ export function HomePage() {
   const t = useT();
   const playList = usePlayer((state) => state.playList);
   const plays = useHistory((state) => state.plays);
+  const [localFiles, setLocalFiles] = useState<LocalTrack[]>([]);
   const personalization = useSettings((state) => state.settings.privacy.personalization);
   const variation = useSettings((state) => state.settings.privacy.variation);
 
   const { data, loading, error, reload } = useAsync<HomeData>(async () => {
+    if (isNative() && !(await probeBackend(getApiBase(), 1200))) {
+      throw new Error("Online catalog is unavailable.");
+    }
     const [sections, charts, explore, discovery] = await Promise.all([
       api.home(8),
       api.charts(),
@@ -46,10 +53,25 @@ export function HomePage() {
     return { sections: sections.sections, charts, explore, discovery };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    void listLocalTracks().then((files) => active && setLocalFiles(files));
+    const onBackendFound = () => reload();
+    window.addEventListener("nrn:backend-found", onBackendFound);
+    return () => {
+      active = false;
+      window.removeEventListener("nrn:backend-found", onBackendFound);
+    };
+  }, [reload]);
+
   const firstTime = plays.length === 0 && !loading && !error;
 
   const recentTracks = useMemo(
     () => plays.map((play) => play.track).filter((track): track is Track => Boolean(track)).slice(0, 8),
+    [plays],
+  );
+  const recentLocal = useMemo(
+    () => plays.filter((play) => play.track?.source === "local").slice(0, 6),
     [plays],
   );
 
@@ -80,14 +102,64 @@ export function HomePage() {
 
   if (error) {
     return (
-      <div className="page">
-        <ErrorState
-          title={t("error.offline")}
-          body={t("error.offlineBody")}
-          onRetry={() => {
-            void ensureBackend().finally(reload);
-          }}
-        />
+      <div className="page page-offline">
+        <header className="page-header">
+          <div>
+            <p className="page-subtitle">{t(greetingKey())}</p>
+            <h1 className="page-title">{t("app.name")}</h1>
+          </div>
+          <Link to="/settings" className="icon-btn" aria-label={t("settings.title")}>
+            <SettingsIcon size={18} />
+          </Link>
+        </header>
+
+        <section className="offline-note" role="status">
+          <span className="offline-indicator" aria-hidden="true" />
+          <div>
+            <strong>{t("home.offlineTitle")}</strong>
+            <p>{t("home.offlineHint")}</p>
+          </div>
+          <button type="button" className="btn compact" onClick={() => void ensureBackend().finally(reload)}>
+            {t("error.retry")}
+          </button>
+        </section>
+
+        <section className="section">
+          <div className="section-head">
+            <h2 className="section-title">{t("home.onDevice")}</h2>
+            <Link to="/library" className="section-hint">{t("showAll")}</Link>
+          </div>
+          {localFiles.length ? (
+            <div className="list">
+              {localFiles.slice(0, 8).map((file) => {
+                const track = localToTrack(file);
+                return <TrackRow key={track.id} track={track} tracks={localFiles.map(localToTrack)} />;
+              })}
+            </div>
+          ) : (
+            <div className="offline-library-empty">
+              <Download size={20} aria-hidden="true" />
+              <div>
+                <strong>{t("home.noLocalMusic")}</strong>
+                <p>{t("home.addLocalMusic")}</p>
+              </div>
+              <Link to="/library" className="btn primary">{t("library.title")}</Link>
+            </div>
+          )}
+        </section>
+
+        <section className="section offline-recent">
+          <div className="section-head"><h2 className="section-title">{t("home.recentlyPlayed")}</h2></div>
+          {recentLocal.length ? (
+            <div className="list">
+              {recentLocal.map((play, index) => play.track ? (
+                <TrackRow key={`${play.trackId}-${play.ts}-${index}`} track={play.track} tracks={[play.track]} />
+              ) : null)}
+            </div>
+          ) : (
+            <p className="section-hint">{t("home.nothingPlayed")}</p>
+          )}
+        </section>
       </div>
     );
   }
@@ -106,6 +178,20 @@ export function HomePage() {
           <SettingsIcon size={18} />
         </Link>
       </header>
+
+      {recentTracks.length > 0 && (
+        <section className="section home-continue">
+          <div className="section-head">
+            <h2 className="section-title">{t("home.recentlyPlayed")}</h2>
+            <span className="section-hint"><Clock size={12} /> {recentTracks.length}</span>
+          </div>
+          <div className="list">
+            {recentTracks.slice(0, 4).map((track, index) => (
+              <TrackRow key={`${track.id}-${index}`} track={track} tracks={recentTracks} index={index} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {firstTime && (
         <section className="section">
@@ -208,22 +294,6 @@ export function HomePage() {
               .map((entry) => (
                 <MediaCard key={(entry.item as PlaylistItem).id ?? (entry.item as PlaylistItem).title} kind="playlist" item={entry.item as PlaylistItem} />
               ))}
-          </div>
-        </section>
-      )}
-
-      {recentTracks.length > 0 && (
-        <section className="section">
-          <div className="section-head">
-            <h2 className="section-title">{t("home.recentlyPlayed")}</h2>
-            <span className="section-hint">
-              <Clock size={12} /> {recentTracks.length}
-            </span>
-          </div>
-          <div className="list">
-            {recentTracks.slice(0, 6).map((track, index) => (
-              <TrackRow key={`${track.id}-${index}`} track={track} tracks={recentTracks} index={index} />
-            ))}
           </div>
         </section>
       )}
