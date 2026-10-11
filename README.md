@@ -1,5 +1,11 @@
 # NrN Music
 
+<p align="center">
+  <img src="native-android/app/src/main/ic_launcher-playstore.png" alt="Logo NrNMusic" width="180">
+</p>
+
+<h1 align="center">NrNMusic</h1>
+
 **NrNMusic** adalah pemutar musik Android gratis yang dibuat oleh Nata. Cari dan dengarkan musik, atur antrean, dan simpan koleksi pribadi langsung di perangkat.
 
 **Tidak perlu login NrNMusic, server sendiri, atau memasukkan URL backend untuk mulai menggunakan aplikasi.**
