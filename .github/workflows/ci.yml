@@ -81,22 +81,19 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  # Builds the Android wrapper (Capacitor) into an installable debug APK.
+  # Builds the standalone native Android app into an installable debug APK.
   # Skipped on pull requests to keep PR feedback fast; runs on main pushes and
   # manual dispatch.
   android:
-    name: Android APK (Capacitor)
+    name: Android APK (Native)
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    env:
+      NRNMUSIC_APPLICATION_ID: com.nrnmusic.app
+      NRNMUSIC_APP_NAME: NrNMusic
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
       - uses: actions/setup-java@v4
         with:
@@ -105,33 +102,22 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # The runner image ships the SDK but not sdkmanager on PATH, and
-      # android-actions/setup-android is incompatible with cmdline-tools 16.
-      - name: Install Android SDK platform 36
+      # Metrolist's native project targets Android SDK 37.
+      - name: Install Android SDK platform 37
         run: |
           set -euo pipefail
           SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)"
           echo "using sdkmanager: $SDKMANAGER"
           yes | "$SDKMANAGER" --licenses > /dev/null || true
-          "$SDKMANAGER" --install "platforms;android-36"
-
-      - name: Build web app
-        working-directory: frontend
-        run: |
-          npm ci
-          npm run build
-
-      - name: Sync web assets into the Android project
-        working-directory: frontend
-        run: npx cap sync android
+          "$SDKMANAGER" --install "platforms;android-37"
 
       - name: Assemble debug APK
-        working-directory: frontend/android
-        run: ./gradlew assembleDebug --no-daemon
+        working-directory: native-android
+        run: ./gradlew :app:assembleFossDebug --no-daemon
 
       - name: Name the artifact
-        run: cp frontend/android/app/build/outputs/apk/debug/app-debug.apk "NrNMusic-debug-${GITHUB_SHA:0:7}.apk"
+        run: cp native-android/app/build/outputs/apk/universalFoss/debug/app-universal-foss-debug.apk "NrNMusic-debug-${GITHUB_SHA:0:7}.apk"
 
       - uses: actions/upload-artifact@v4
         with:

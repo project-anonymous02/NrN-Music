@@ -71,3 +71,7 @@ All paths below are relative to the external clone `/workspace/Metrolist`.
 3. Focus parity on queue operations, radio continuation, player state, local library/detail views, lyrics, useful loading/error states, and a coherent responsive shell. Do not claim native background playback, true offline streaming downloads, or account synchronization unless implemented and tested on target devices.
 4. Prefer cohesive full local-data export/import and consistent settings-driven/reduced-motion behavior over recreating Metrolist's entire native feature set.
 5. Treat remote stream/catalog failures as normal states. Do not silently imply that metadata availability guarantees a playable stream or lyrics.
+
+## Follow-up implementation decision
+
+The initial recommendation to retain the React/FastAPI/Capacitor path for Android was superseded after the user requested a standalone app with no server URL. The Android APK now uses the native Metrolist application and `:innertube` module as a GPL-3.0 fork in `native-android`, with NrNMusic app identity and a native GitHub Actions build. The web/FastAPI deployment remains separate. APK compile and device playback verification are still pending.

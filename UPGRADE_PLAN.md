@@ -2,7 +2,7 @@
 
 ## Direction
 
-Use Metrolist as a source-verified interaction reference, adapting concepts to NrNMusic's React + TypeScript + FastAPI + Capacitor architecture. Retain the existing black/orange identity, no-login use, public catalog boundary and local-first storage. Do not import Metrolist code, assets, or brand elements.
+The user requested a total Android replacement so the installed app opens directly, like Metrolist, without a NrNMusic backend or manually entered URL. The APK is now a native Kotlin/Jetpack Compose fork based on the locally inspected Metrolist source. It uses direct InnerTube catalog/stream paths, Media3 playback, local Android persistence, and NrNMusic app branding. The old React/FastAPI web deployment remains separate and is not called by this Android build.
 
 ## Work map
 
@@ -16,9 +16,15 @@ Use Metrolist as a source-verified interaction reference, adapting concepts to N
 | P2 | Improve any visual flaw found by source/screenshot verification, respecting black background and configurable non-green accent | CSS/pages/components only for demonstrated issue | Medium | Responsive layout, no broken controls, contrast/reduced-motion intact |
 | P3 | Extend deeper playback, offline, native controls only where the backend/platform can support them and tests/device verification are available | backend/audio/Capacitor | High | No misleading download claim; documented capability and actual device/browser evidence |
 
+## Android standalone architecture status
+
+The standalone native implementation is integrated. Remaining work is to build it in CI, resolve compile/dependency failures, and verify launch plus online search/playback on Android. Do not reintroduce LAN discovery or a required API URL into the native APK.
+
+The Android fork retains upstream GPL-3.0 licensing and attribution in `native-android/LICENSE` and `native-android/FORK_NOTICE.md`. InnerTubeX is a GPL-3.0 runtime dependency as specified by the upstream version catalog. Before distributing APKs, provide the corresponding source and license notices as required by GPL-3.0.
+
 ## Implementation selection
 
-P1 motion consistency and full local backup are selected for this pass. Core player, queue, library, public detail pages, lyrics, settings and local audio import already exist, so duplicating them would add regression risk without improving completeness. True server-stream downloads, cross-device sync, Cast/Android Auto and guaranteed background playback are excluded because the present platform/backend does not provide those guarantees.
+The native Android app is integrated; build and device verification remain necessary before calling the APK fully verified. The legacy web UI upgrades remain separate from the Android app and do not establish feature parity across platforms.
 
 ## Verification plan
 
@@ -33,3 +39,10 @@ Run frontend unit tests, typecheck, and production build as requested. Run backe
 - Removed Settings controls for crossfade, volume normalization, and queue policy that were not connected to playback; wired the sleep timer default into the player options.
 - Added versioned local backup/import for settings, library, history, and queue. Imported queues remain paused. Local audio and stream cache are excluded and disclosed in Settings.
 - Verification: frontend 56 tests passed; typecheck and production build passed; backend 30 tests passed; Chromium E2E smoke passed for Home, Settings, Search, deep route, and playhead advance. `git diff --check` passed. The Android APK build was not run locally; the existing CI workflow was audited and left unchanged.
+
+## Reassessment after Android architecture inspection (2026-10-11)
+
+- Confirmed `frontend/android/app/src/main` is a Capacitor shell with only `LanDiscoveryPlugin`; `frontend/src/lib/api.ts` sends catalog requests to `/api/*`, and `frontend/src/stores/player.ts` streams `/api/stream/{id}`. The Android package does not bundle FastAPI.
+- Confirmed Metrolist's direct path in `/workspace/Metrolist/innertube/src/main/kotlin/com/metrolist/innertube/InnerTube.kt`, `.../YouTube.kt`, `app/src/main/kotlin/com/metrolist/music/utils/InnerTubeXPlayer.kt`, and `app/src/main/kotlin/com/metrolist/music/playback/MusicService.kt`.
+- Cloned InnerTubeX separately to `/workspace/innertubex` for dependency/license inspection; no external source was added to NrNMusic.
+- Android backend removal is implemented by replacing the APK build target with the native application. The direct InnerTube/Media3 path has not yet been built or verified on a device in this workspace; CI and device checks are required before claiming generated APK playback works.

@@ -13,6 +13,7 @@ Pemutar musik bergaya Spotify di atas metadata YouTube Music: cari lagu, buka al
 | --- | --- |
 | Frontend | React 19, TypeScript 5.7, Vite 6, Zustand, React Router 7, lucide-react |
 | Backend | Python 3.14, FastAPI, uvicorn, ytmusicapi (metadata), yt-dlp (resolve stream) |
+| Android | Kotlin, Jetpack Compose, Room, Media3, InnerTube (`native-android`; GPL-3.0 fork) |
 | Data | IndexedDB (riwayat, favorit, antrean), localStorage (pengaturan), cache TTL/LRU di memori |
 | Tes | pytest (32), Vitest (52), `tsc -b`, E2E headless Chromium via CDP |
 
@@ -24,6 +25,7 @@ NrNMusic/
 ├── docs/API.md                 ← kontrak endpoint
 ├── backend/app/                ← FastAPI: routers, services, cache, errors
 ├── frontend/src/               ← SPA: pages, components, stores, i18n, lib
+├── native-android/             ← APK: native Compose app + InnerTube + Media3
 ├── scripts/e2e_smoke.py        ← E2E (server + Chromium dalam satu proses)
 └── artifacts/                  ← screenshot hasil E2E
 ```
@@ -33,6 +35,7 @@ NrNMusic/
 - Python 3.11+ dengan `venv` (`pip install -r backend/requirements.txt` atau pakai venv yang sudah ada).
 - Node.js 18+ dan npm.
 - Koneksi internet (semua metadata & audio datang dari YouTube Music).
+- Untuk build APK lokal: JDK 21 + Android SDK platform 37.
 - Opsional untuk E2E: binary Chromium/Chrome di `PATH`.
 
 ## Menjalankan
@@ -76,24 +79,16 @@ location / {
 
 ### 4. Android (APK)
 
-Wrapper [Capacitor](https://capacitorjs.com) ada di `frontend/android`. Web asset dibundel ke dalam APK; APK **tidak** membawa backend — dia butuh server NrNMusic yang bisa dijangkau (PC/VPS di LAN yang sama).
+APK Android memakai aplikasi native Kotlin/Jetpack Compose di `native-android`, berdasarkan Metrolist. Katalog dan pemutaran inti mengakses YouTube Music melalui InnerTube dan Media3. **Tidak perlu backend NrNMusic, PC/VPS, pemindaian LAN, URL server, ataupun login untuk mulai memakai aplikasi.** Fitur library disimpan di perangkat. Integrasi opsional seperti Listen Together dapat memiliki servernya sendiri. YouTube dapat mengubah protokol atau membatasi konten, jadi ketersediaan katalog dan stream tetap bergantung pada layanan upstream.
 
 ```bash
-cd frontend
-npm ci && npm run build
-npx cap sync android
-cd android && ./gradlew assembleDebug      # output: app/build/outputs/apk/debug/app-debug.apk
+cd native-android
+./gradlew :app:assembleFossDebug           # output under app/build/outputs/apk/universalFoss/debug/
 ```
 
-Prasyarat lokal: JDK 21 + Android SDK (platform 36). Alternatif tanpa setup lokal: jalankan **GitHub Actions** — job `android` di `.github/workflows/ci.yml` membangun `NrNMusic-debug-<sha>.apk` di setiap push ke `main` dan mengunggahnya sebagai artifact **`NrNMusic-debug-apk`** (tab Actions → pilih run → bagian Artifacts).
+Prasyarat lokal: JDK 21 + Android SDK platform 37. GitHub Actions membangun APK native pada push ke `main` dan manual dispatch, lalu mengunggah artifact **`NrNMusic-debug-apk`** (tab Actions → pilih run → bagian Artifacts). Backend FastAPI tetap dipakai hanya untuk deployment web lama; Android tidak memakai API FastAPI atau Capacitor.
 
-Setelah APK terpasang, **tidak perlu mengisi IP apa pun**. Saat backend berjalan di PC yang sama (Wi-Fi yang sama), aplikasi otomatis menemukannya:
-
-1. Jalankan backend di PC: `uvicorn app.main:app --host 0.0.0.0 --port 8000` (`HOST` default sudah `0.0.0.0`). Backend menyiar beacon UDP setiap 2 detik.
-2. Buka APK — aplikasi mencari backend (beacon UDP, lalu pemindaian subnet Wi-Fi sebagai cadangan) dan langsung terhubung.
-3. Kalau otomatis gagal (terlalu banyak jaringan/VPN), isi manual di **Settings → Server**, contoh `http://192.168.1.10:8000`.
-
-Catatan: build debug dipakai karena butuh tanpa keystore. Rilis Play Store butuh keystore + signing config sendiri.
+Catatan: artifact Actions adalah build debug. Rilis distribusi memerlukan signing config yang dikelola pemilik project. Kode aplikasi Android turunan dan dependensi InnerTubeX berlisensi GPL-3.0; lihat `native-android/LICENSE` dan `native-android/FORK_NOTICE.md`.
 
 ## Konfigurasi
 
