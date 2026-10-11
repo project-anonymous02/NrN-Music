@@ -34,7 +34,7 @@ plugins {
 
 android {
     namespace = "com.metrolist.music"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = applicationIdOverride

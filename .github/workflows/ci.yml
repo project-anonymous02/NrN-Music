@@ -102,15 +102,15 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Metrolist's native project targets Android SDK 37.
-      - name: Install Android SDK platform 37
+      # Use the latest Android SDK platform available on the GitHub runner.
+      - name: Install Android SDK platform 36
         run: |
           set -euo pipefail
           SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)"
           echo "using sdkmanager: $SDKMANAGER"
           yes | "$SDKMANAGER" --licenses > /dev/null || true
-          "$SDKMANAGER" --install "platforms;android-37"
+          "$SDKMANAGER" --install "platforms;android-36"
 
       - name: Assemble debug APK
         working-directory: native-android
