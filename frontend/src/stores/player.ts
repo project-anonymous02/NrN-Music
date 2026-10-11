@@ -41,6 +41,7 @@ interface PlayerState {
   lyrics: { data: Lyrics | null; loading: boolean; error: string | null };
 
   init: () => void;
+  restoreQueue: (queue: QueueState) => void;
   playList: (tracks: Track[], index?: number, shuffle?: boolean) => void;
   playTrackInContext: (track: Track, context: Track[]) => void;
   toggle: () => void;
@@ -241,6 +242,26 @@ export const usePlayer = create<PlayerState>((set, get) => {
           }
         });
       }
+    },
+
+    restoreQueue: (queue) => {
+      audioEngine.stop();
+      const restored: QueueState = {
+        tracks: queue.tracks,
+        index: queue.index,
+        shuffle: queue.shuffle,
+        repeat: queue.repeat,
+        order: queue.shuffle ? queue.order : [],
+      };
+      set({
+        queue: restored,
+        status: "idle",
+        position: 0,
+        duration: 0,
+        error: null,
+        lyrics: { data: null, loading: false, error: null },
+      });
+      void idbSet("queue", QUEUE_KEY, restored);
     },
 
     playList: (tracks, index = 0, shuffle) => {

@@ -64,6 +64,8 @@ export function FullPlayer() {
 
   const settings = useSettings((state) => state.settings);
   const update = useSettings((state) => state.update);
+  const animatePlayer = settings.animation.enabled && !settings.animation.reduceMotion && !settings.animation.performanceMode;
+  const animateArtwork = animatePlayer && settings.animation.artworkAnimation;
 
   const [panel, setPanel] = useState<Panel>("none");
   const [scrub, setScrub] = useState<number | null>(null);
@@ -82,6 +84,7 @@ export function FullPlayer() {
   const art = bestThumb(track.thumbnails, 600);
   const displayPosition = scrub ?? position;
   const repeatIcon = repeat === "one" ? <Repeat1 size={20} /> : <Repeat size={20} />;
+  const sleepChoices = Array.from(new Set([settings.playback.sleepDefault, 5, 15, 30, 60])).filter((minutes) => minutes > 0);
 
   const share = async () => {
     const url = `https://music.youtube.com/watch?v=${track.id}`;
@@ -101,10 +104,10 @@ export function FullPlayer() {
       {open && (
         <motion.div
           className="full-player"
-          initial={{ y: "100%" }}
+          initial={animatePlayer ? { y: "100%" } : false}
           animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", stiffness: 320, damping: 36 }}
+          exit={animatePlayer ? { y: "100%" } : { opacity: 0 }}
+          transition={animatePlayer ? { type: "spring", stiffness: 320 * settings.animation.speed, damping: 36 } : { duration: 0 }}
           role="dialog"
           aria-modal="true"
           aria-label={t("player.openFull")}
@@ -124,9 +127,9 @@ export function FullPlayer() {
             src={art ?? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"}
             alt=""
             key={track.id}
-            initial={settings.animation.artworkAnimation ? { scale: 0.94, opacity: 0.4 } : false}
+            initial={animateArtwork ? { scale: 0.94, opacity: 0.4 } : false}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 28 }}
+            transition={animateArtwork ? { type: "spring", stiffness: 260 * settings.animation.speed, damping: 28 } : { duration: 0 }}
           />
 
           <div className="full-meta">
@@ -286,7 +289,7 @@ export function FullPlayer() {
 
           <Sheet open={panel === "sleep"} onClose={() => setPanel("none")} title={t("player.sleepTimer")}>
             <div className="list">
-              {[5, 15, 30, 60].map((minutes) => (
+              {sleepChoices.map((minutes) => (
                 <button key={minutes} type="button" className="sheet-item" onClick={() => { setSleepTimer(minutes); setPanel("none"); }}>
                   <Timer size={18} />
                   {minutes} min

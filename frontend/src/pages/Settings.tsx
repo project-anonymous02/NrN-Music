@@ -3,6 +3,7 @@ import { AlertTriangle } from "lucide-react";
 import { useT } from "../hooks/useT";
 import { LOCALES } from "../i18n";
 import { estimateStorage } from "../lib/db";
+import { createLocalBackup, importLocalBackup } from "../lib/backup";
 import { formatBytes } from "../lib/format";
 import { getApiBase, setApiBase } from "../lib/api";
 import {
@@ -115,6 +116,7 @@ export function SettingsPage() {
 
   const settingsFile = useRef<HTMLInputElement>(null);
   const libraryFile = useRef<HTMLInputElement>(null);
+  const backupFile = useRef<HTMLInputElement>(null);
   const [storage, setStorage] = useState<{ usage: number; quota: number } | null>(null);
   const [serverDraft, setServerDraft] = useState(getApiBase());
   const [serverSaved, setServerSaved] = useState(getApiBase());
@@ -170,18 +172,6 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------ appearance */}
       <section className="settings-group">
         <h3>{t("settings.appearance")}</h3>
-        <Row label={t("settings.theme")}>
-          <select
-            aria-label={t("settings.theme")}
-            value={settings.theme}
-            onChange={(event) => update({ theme: event.target.value as Settings["theme"] })}
-          >
-            <option value="dark">{t("settings.themeDark")}</option>
-            <option value="light">{t("settings.themeLight")}</option>
-            <option value="system">{t("settings.themeSystem")}</option>
-          </select>
-        </Row>
-        <ColorField label={t("settings.backgroundColor")} value={settings.colors.bg} onChange={(v) => setColor("bg", v)} />
         <ColorField label={t("settings.primaryAccent")} value={settings.colors.accent} onChange={(v) => setColor("accent", v)} />
         <ColorField label={t("settings.secondaryAccent")} value={settings.colors.accent2} onChange={(v) => setColor("accent2", v)} />
         <ColorField label={t("settings.textColors")} value={settings.colors.text} onChange={(v) => setColor("text", v)} />
@@ -289,14 +279,8 @@ export function SettingsPage() {
             <option value="one">{t("player.repeatOne")}</option>
           </select>
         </Row>
-        <Row label={t("settings.crossfade")} desc={t("settings.seconds", { count: settings.playback.crossfade })}>
-          <Slider label={t("settings.crossfade")} value={settings.playback.crossfade} min={0} max={12} onChange={(v) => setPlayback({ crossfade: v })} />
-        </Row>
         <Row label={t("settings.speed")}>
           <Slider label={t("settings.speed")} value={settings.playback.speed} min={0.5} max={2} step={0.05} onChange={(v) => setPlayback({ speed: v })} />
-        </Row>
-        <Row label={t("settings.normalization")}>
-          <Toggle label={t("settings.normalization")} checked={settings.playback.normalization} onChange={(v) => setPlayback({ normalization: v })} />
         </Row>
         <Row label={t("settings.audioQuality")}>
           <select
@@ -311,16 +295,6 @@ export function SettingsPage() {
         </Row>
         <Row label={t("settings.sleepDefault")} desc={t("settings.minutes", { count: settings.playback.sleepDefault })}>
           <Slider label={t("settings.sleepDefault")} value={settings.playback.sleepDefault} min={0} max={120} step={15} onChange={(v) => setPlayback({ sleepDefault: v })} />
-        </Row>
-        <Row label={t("settings.queueBehaviorLabel")}>
-          <select
-            aria-label={t("settings.queueBehaviorLabel")}
-            value={settings.playback.queueBehavior}
-            onChange={(event) => setPlayback({ queueBehavior: event.target.value as Settings["playback"]["queueBehavior"] })}
-          >
-            <option value="queue">{t("settings.queueKeep")}</option>
-            <option value="replace">{t("settings.queueReplace")}</option>
-          </select>
         </Row>
         <Row label={t("settings.resumeSession")}>
           <Toggle label={t("settings.resumeSession")} checked={settings.playback.resumeSession} onChange={(v) => setPlayback({ resumeSession: v })} />
@@ -405,6 +379,27 @@ export function SettingsPage() {
 
       <section className="settings-group">
         <h3>{t("settings.data")}</h3>
+        <Row label={t("settings.fullBackup")} desc={t("settings.fullBackupDesc")}>
+          <div className="setting-actions">
+            <button type="button" className="btn" onClick={() => download("nrnmusic-backup.json", createLocalBackup())}>
+              {t("settings.exportBackup")}
+            </button>
+            <button type="button" className="btn" onClick={() => backupFile.current?.click()}>
+              {t("settings.importBackup")}
+            </button>
+            <input
+              ref={backupFile}
+              type="file"
+              accept="application/json"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) readImport(file, importLocalBackup);
+                event.target.value = "";
+              }}
+            />
+          </div>
+        </Row>
         <Row label={t("settings.exportSettings")}>
           <button type="button" className="btn" onClick={() => download("nrnmusic-settings.json", exportSettings())}>
             {t("settings.exportSettings")}

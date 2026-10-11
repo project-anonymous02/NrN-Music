@@ -57,6 +57,13 @@ describe("settings mutations", () => {
     expect(settings.colors.accent).toBe(defaultSettings.colors.accent);
   });
 
+  it("keeps the canvas black and replaces green accent choices", () => {
+    useSettings.getState().update({ theme: "light", colors: { bg: "#ffffff", accent: "#1db954" } });
+    expect(useSettings.getState().settings.theme).toBe("dark");
+    expect(useSettings.getState().settings.colors.bg).toBe("#000000");
+    expect(useSettings.getState().settings.colors.accent).toBe(defaultSettings.colors.accent);
+  });
+
   it("resets every value but keeps the chosen language", () => {
     useSettings.getState().update({ language: "id", radius: 4 });
     useSettings.getState().reset();

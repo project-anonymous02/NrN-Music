@@ -12,7 +12,8 @@ interface SheetProps {
 
 /** Bottom sheet on phones, centred dialog on wide screens. */
 export function Sheet({ open, onClose, title, children, labelledBy }: SheetProps) {
-  const animate = useSettings((state) => state.settings.animation.sheetAnimation);
+  const animation = useSettings((state) => state.settings.animation);
+  const animate = animation.enabled && animation.sheetAnimation && !animation.reduceMotion && !animation.performanceMode;
 
   useEffect(() => {
     if (!open) return;
@@ -31,7 +32,7 @@ export function Sheet({ open, onClose, title, children, labelledBy }: SheetProps
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: animate ? 0.18 : 0 }}
+          transition={{ duration: animate ? 0.18 / animation.speed : 0 }}
           onClick={onClose}
           role="presentation"
         >
@@ -43,7 +44,7 @@ export function Sheet({ open, onClose, title, children, labelledBy }: SheetProps
             initial={animate ? { y: 60, opacity: 0.6 } : false}
             animate={{ y: 0, opacity: 1 }}
             exit={animate ? { y: 60, opacity: 0 } : { opacity: 0 }}
-            transition={{ type: "spring", stiffness: 420, damping: 36 }}
+            transition={animate ? { type: "spring", stiffness: 420 * animation.speed, damping: 36 } : { duration: 0 }}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="sheet-grip" aria-hidden="true" />

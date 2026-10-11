@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useT } from "../hooks/useT";
 import { bestThumb } from "../lib/format";
 import { usePlayer } from "../stores/player";
+import { useSettings } from "../stores/settings";
 
 export function MiniPlayer() {
   const t = useT();
@@ -13,6 +14,8 @@ export function MiniPlayer() {
   const toggle = usePlayer((state) => state.toggle);
   const openFull = usePlayer((state) => state.openFull);
   const error = usePlayer((state) => state.error);
+  const animation = useSettings((state) => state.settings.animation);
+  const animate = animation.enabled && animation.miniPlayerAnimation && !animation.reduceMotion && !animation.performanceMode;
 
   const progress = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
   const playing = status === "playing" || status === "waiting" || status === "loading";
@@ -22,10 +25,10 @@ export function MiniPlayer() {
       {track && (
         <motion.div
           className="mini-player"
-          initial={{ y: 80, opacity: 0 }}
+          initial={animate ? { y: 80, opacity: 0 } : false}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 80, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 380, damping: 34 }}
+          exit={animate ? { y: 80, opacity: 0 } : { opacity: 0 }}
+          transition={animate ? { type: "spring", stiffness: 380 * animation.speed, damping: 34 } : { duration: 0 }}
           role="region"
           aria-label={t("player.openFull")}
         >

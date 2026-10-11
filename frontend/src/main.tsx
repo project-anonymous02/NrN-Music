@@ -1,6 +1,7 @@
-import { StrictMode } from "react";
+import { StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { MotionConfig } from "motion/react";
 import { App } from "./App";
 import { discoverBackend, isNative } from "./lib/discovery";
 import { setApiBase } from "./lib/api";
@@ -26,10 +27,26 @@ async function boot() {
 
   const container = document.getElementById("root");
   if (!container) return;
+
+  function MotionPolicy({ children }: { children: ReactNode }) {
+    const animation = useSettings((state) => state.settings.animation);
+    const reduced = animation.reduceMotion || !animation.enabled || animation.performanceMode;
+    return (
+      <MotionConfig
+        reducedMotion={reduced ? "always" : "user"}
+        transition={{ duration: 0.22 / Math.max(0.5, animation.speed), ease: "easeOut" }}
+      >
+        {children}
+      </MotionConfig>
+    );
+  }
+
   createRoot(container).render(
     <StrictMode>
       <BrowserRouter>
-        <App />
+        <MotionPolicy>
+          <App />
+        </MotionPolicy>
       </BrowserRouter>
     </StrictMode>,
   );

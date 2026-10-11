@@ -1,12 +1,15 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useT } from "../hooks/useT";
 import { useUi } from "../stores/ui";
+import { useSettings } from "../stores/settings";
 
 export function Toasts() {
   const t = useT();
   const toasts = useUi((state) => state.toasts);
   const dismiss = useUi((state) => state.dismissToast);
   const announce = useUi((state) => state.announce);
+  const animation = useSettings((state) => state.settings.animation);
+  const animate = animation.enabled && !animation.reduceMotion && !animation.performanceMode;
 
   return (
     <>
@@ -17,9 +20,10 @@ export function Toasts() {
               key={toast.id}
               type="button"
               className={`toast${toast.tone === "error" ? " error" : ""}`}
-              initial={{ opacity: 0, y: 12 }}
+              initial={animate ? { opacity: 0, y: 12 } : false}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
+              exit={animate ? { opacity: 0, y: 8 } : { opacity: 0 }}
+              transition={{ duration: animate ? 0.16 / animation.speed : 0 }}
               onClick={() => dismiss(toast.id)}
             >
               {toast.text}

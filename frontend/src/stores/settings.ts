@@ -123,10 +123,14 @@ export const PRESETS: { name: string; colors: Partial<Settings["colors"]> }[] = 
 ];
 
 function merge(base: Settings, patch: DeepPartial<Settings>): Settings {
+  const colors = { ...base.colors, ...(patch.colors ?? {}) };
+  if (isGreen(colors.accent)) colors.accent = defaultSettings.colors.accent;
+  if (isGreen(colors.accent2)) colors.accent2 = defaultSettings.colors.accent2;
   const out: Settings = {
     ...base,
     ...patch,
-    colors: { ...base.colors, ...(patch.colors ?? {}) },
+    theme: "dark",
+    colors: { ...colors, bg: "#000000" },
     animation: { ...base.animation, ...(patch.animation ?? {}) },
     playback: { ...base.playback, ...(patch.playback ?? {}) },
     privacy: { ...base.privacy, ...(patch.privacy ?? {}) },
@@ -171,17 +175,17 @@ export function validateSettings(settings: Settings): ContrastWarning[] {
 const DENSITY_ROW: Record<Density, number> = { compact: 46, comfortable: 56, spacious: 66 };
 
 /** Writes the settings onto :root so every component reacts without prop drilling. */
-export function applySettings(settings: Settings, systemDark = true): void {
+export function applySettings(settings: Settings): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   const { colors } = settings;
-  const dark = settings.theme === "dark" || (settings.theme === "system" && systemDark);
 
-  root.dataset.theme = dark ? "dark" : "light";
+  root.dataset.theme = "dark";
   root.dataset.reduceMotion = settings.animation.reduceMotion || !settings.animation.enabled || settings.animation.performanceMode ? "1" : "0";
+  root.dataset.pageTransition = settings.animation.pageTransition ? "1" : "0";
 
   const style = root.style;
-  style.setProperty("--bg", colors.bg);
+  style.setProperty("--bg", "#000000");
   style.setProperty("--surface-1", colors.surface1);
   style.setProperty("--surface-2", colors.surface2);
   style.setProperty("--surface-3", colors.surface3);
@@ -206,7 +210,7 @@ export function applySettings(settings: Settings, systemDark = true): void {
   else style.removeProperty("--font-sans");
 
   const opacity = (100 - settings.transparency) / 100;
-  style.setProperty("--surface-overlay", hexToRgba(dark ? colors.surface2 : "#ffffff", opacity));
+  style.setProperty("--surface-overlay", hexToRgba(colors.surface2, opacity));
 }
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -241,21 +245,13 @@ export const useSettings = create<SettingsState>((set, get) => ({
     const stored = await idbGet<Settings>("settings", "current");
     const base = stored ? merge(defaultSettings, stored as DeepPartial<Settings>) : defaultSettings;
     if (!stored) base.language = detectLanguage();
-    const prefersDark =
-      typeof window !== "undefined" && window.matchMedia
-        ? window.matchMedia("(prefers-color-scheme: dark)").matches
-        : true;
-    applySettings(base, prefersDark);
+    applySettings(base);
     set({ settings: base, hydrated: true });
   },
 
   update: (patch) => {
     const next = merge(get().settings, patch);
-    const prefersDark =
-      typeof window !== "undefined" && window.matchMedia
-        ? window.matchMedia("(prefers-color-scheme: dark)").matches
-        : true;
-    applySettings(next, prefersDark);
+    applySettings(next);
     set({ settings: next });
     scheduleSave(next);
   },
@@ -263,7 +259,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   reset: () => {
     const language = get().settings.language;
     const next = { ...defaultSettings, language };
-    applySettings(next, true);
+    applySettings(next);
     set({ settings: next });
     scheduleSave(next);
   },
@@ -277,7 +273,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         return { ok: false, reason: "invalid" };
       }
       const next = merge(defaultSettings, parsed.settings);
-      applySettings(next, true);
+      applySettings(next);
       set({ settings: next });
       scheduleSave(next);
       return { ok: true };
