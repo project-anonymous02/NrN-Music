@@ -127,6 +127,17 @@ jobs:
         working-directory: native-android
         run: ./gradlew :app:assembleFossDebug --no-daemon
 
+      - name: Verify APK signature and package metadata
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          APK_PATH="$(find native-android/app/build/outputs/apk -type f -name '*.apk' -print -quit)"
+          test -n "$APK_PATH"
+          BUILD_TOOLS="$(find "$SDK_ROOT/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          "$BUILD_TOOLS/apksigner" verify --verbose "$APK_PATH"
+          BADGING="$("$BUILD_TOOLS/aapt" dump badging "$APK_PATH")"
+          printf '%s\n' "$BADGING" | grep -F "package: name='com.nrnmusic.app'"
+          printf '%s\n' "$BADGING" | grep -F "sdkVersion:'26'"
+
       - name: Name the artifact
         run: |
           APK_PATH="$(find native-android/app/build/outputs/apk -type f -name '*.apk' -print -quit)"
