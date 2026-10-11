@@ -64,7 +64,7 @@ Repository ini juga menyertakan frontend web dan backend FastAPI. Keduanya merup
 **Made by Nata**  
 **Project Nata**
 
-Yap, benar—**Nur Rasa Natakusuma**. NrNMusic adalah proyek pribadi yang dikembangkan oleh Nata.
+Yap, benar—**Nur Rasa Natakusuma**. NrNMusic adalah proyek pribadi yang dikembangkan oleh Nata (*Beserta AI wkwk*).
 
 Aplikasi Android ini merupakan fork dan modifikasi dari [Metrolist](https://github.com/MetrolistGroup/Metrolist), serta menggunakan InnerTubeX. Kode Android turunan dan InnerTubeX dilisensikan di bawah **GNU GPL-3.0**. Lihat [LICENSE](native-android/LICENSE) dan [FORK_NOTICE.md](native-android/FORK_NOTICE.md) untuk informasi lisensi dan atribusi.
 
