@@ -1,0 +1,59 @@
+name: One-time NrNMusic attribution correction
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/nrnmusic-attribution-fix-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  preserve-upstream-credit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Preserve upstream creator credit in localized strings
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path("native-android/app/src/main/res")
+          changed = 0
+          for path in root.rglob("nrnmusic_strings.xml"):
+              if path.parent.name == "values":
+                  continue
+              lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+              for index, line in enumerate(lines):
+                  if 'name="wrapped_special_thanks"' in line:
+                      corrected = line.replace("NrNMusic", "Metrolist")
+                      if corrected != line:
+                          lines[index] = corrected
+                          changed += 1
+              path.write_text("".join(lines), encoding="utf-8")
+
+          if changed != 32:
+              raise RuntimeError(f"Expected 32 localized attribution lines, corrected {changed}")
+          print(f"Restored original creator attribution in {changed} localized resources.")
+
+          Path(".github/workflows/nrnmusic-attribution-fix-once.yml").unlink()
+          PY
+
+      - name: Commit and push attribution correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A native-android .github/workflows/nrnmusic-attribution-fix-once.yml
+          git commit -m "fix: preserve upstream creator attribution in translations"
+          git push origin HEAD:main
