@@ -28,6 +28,8 @@ import com.metrolist.innertube.models.YouTubeLocale
 import com.metrolist.kugou.KuGou
 import com.metrolist.lastfm.LastFM
 import com.metrolist.music.BuildConfig
+import com.metrolist.music.backup.AutoBackupFrequency
+import com.metrolist.music.backup.AutomaticBackupWorker
 import com.metrolist.music.constants.*
 import com.metrolist.music.di.ApplicationScope
 import com.metrolist.music.extensions.toEnum
@@ -259,6 +261,26 @@ class App :
                         LastFM.sessionKey = session
                     } catch (e: Exception) {
                         Timber.e("Error while loading last.fm session key. %s", e.message)
+                    }
+                }
+        }
+
+        applicationScope.launch(Dispatchers.IO) {
+            dataStore.data
+                .map { preferences ->
+                    (preferences[AutoBackupEnabledKey] ?: false) to
+                        (preferences[AutoBackupFrequencyKey] ?: AutoBackupFrequency.WEEKLY.name)
+                }
+                .distinctUntilChanged()
+                .collect { (enabled, frequency) ->
+                    try {
+                        AutomaticBackupWorker.schedule(
+                            applicationContext,
+                            enabled,
+                            AutoBackupFrequency.fromSetting(frequency),
+                        )
+                    } catch (e: Exception) {
+                        Timber.e(e, "Could not schedule automatic backups")
                     }
                 }
         }

@@ -5,9 +5,12 @@
 
 package com.metrolist.music.ui.screens.settings
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +30,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -47,14 +52,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.backup.AutoBackupFrequency
+import com.metrolist.music.constants.AutoBackupEnabledKey
+import com.metrolist.music.constants.AutoBackupFrequencyKey
 import com.metrolist.music.db.entities.Song
 import com.metrolist.music.ui.component.DefaultDialog
+import com.metrolist.music.ui.component.EnumDialog
 import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.component.ListDialog
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.menu.AddToPlaylistDialogOnline
@@ -62,14 +73,22 @@ import com.metrolist.music.ui.menu.CsvColumnMappingDialog
 import com.metrolist.music.ui.menu.CsvImportProgressDialog
 import com.metrolist.music.ui.menu.LoadingScreen
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.BackupArchive
+import com.metrolist.music.utils.rememberPreference
+import com.metrolist.music.utils.reportException
 import com.metrolist.music.viewmodels.BackupPreviewInfo
 import com.metrolist.music.viewmodels.BackupRestoreViewModel
 import com.metrolist.music.viewmodels.ConvertedSongLog
 import com.metrolist.music.viewmodels.CsvImportState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,6 +128,119 @@ fun BackupAndRestore(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    val (autoBackupEnabled, onAutoBackupEnabledChange) =
+        rememberPreference(AutoBackupEnabledKey, defaultValue = false)
+    val (autoBackupFrequency, onAutoBackupFrequencyChange) =
+        rememberPreference(
+            AutoBackupFrequencyKey,
+            defaultValue = AutoBackupFrequency.WEEKLY.name,
+        )
+    val autoBackupFrequencyValue = AutoBackupFrequency.fromSetting(autoBackupFrequency)
+    var showAutoBackupFrequencyDialog by rememberSaveable { mutableStateOf(false) }
+    var automaticBackups by remember { mutableStateOf(emptyList<File>()) }
+    var showAutomaticBackupDialog by rememberSaveable { mutableStateOf(false) }
+
+    val restoreAutomaticBackup: (File) -> Unit = { file ->
+        coroutineScope.launch {
+            try {
+                val uri =
+                    withContext(Dispatchers.IO) {
+                        FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.FileProvider",
+                            file,
+                        )
+                    }
+                pendingRestoreUri = uri
+                val preview = withContext(Dispatchers.IO) { viewModel.previewBackup(context, uri) }
+                backupPreviewInfo = preview
+                showRestoreConfirmDialog = true
+                accountCheckFailed = false
+                if (preview.hasAuthData && preview.cookie != null) {
+                    isLoadingAccountInfo = true
+                    val accountInfo =
+                        withContext(Dispatchers.IO) {
+                            viewModel.fetchAccountInfoFromBackup(preview.cookie)
+                        }
+                    if (accountInfo != null) {
+                        backupPreviewInfo = accountInfo
+                    } else {
+                        accountCheckFailed = true
+                    }
+                    isLoadingAccountInfo = false
+                }
+            } catch (error: Exception) {
+                reportException(error)
+            }
+        }
+    }
+
+    if (showAutoBackupFrequencyDialog) {
+        EnumDialog(
+            onDismiss = { showAutoBackupFrequencyDialog = false },
+            onSelect = {
+                onAutoBackupFrequencyChange(it.name)
+                showAutoBackupFrequencyDialog = false
+            },
+            title = stringResource(R.string.automatic_backup_frequency),
+            current = autoBackupFrequencyValue,
+            values = AutoBackupFrequency.entries.toList(),
+            valueText = {
+                stringResource(
+                    when (it) {
+                        AutoBackupFrequency.DAILY -> R.string.automatic_backup_daily
+                        AutoBackupFrequency.WEEKLY -> R.string.automatic_backup_weekly
+                        AutoBackupFrequency.MONTHLY -> R.string.automatic_backup_monthly
+                    }
+                )
+            }
+        )
+    }
+
+    if (showAutomaticBackupDialog) {
+        ListDialog(onDismiss = { showAutomaticBackupDialog = false }) {
+            item {
+                Text(
+                    text = stringResource(R.string.automatic_backup_restore),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                )
+            }
+            items(automaticBackups) { file ->
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showAutomaticBackupDialog = false
+                                restoreAutomaticBackup(file)
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.restore),
+                        contentDescription = null,
+                    )
+                    Column(modifier = Modifier.padding(start = 16.dp)) {
+                        Text(
+                            text =
+                                SimpleDateFormat(
+                                    "MMM d, yyyy HH:mm",
+                                    Locale.getDefault(),
+                                ).format(Date(file.lastModified())),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        Text(
+                            text = "${file.length() / 1024} KB",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     val backupLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
@@ -175,6 +307,81 @@ fun BackupAndRestore(
         )
 
         val appName = stringResource(R.string.app_name)
+        Material3SettingsGroup(
+            title = stringResource(R.string.automatic_backup),
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        title = { Text(stringResource(R.string.automatic_backup)) },
+                        description = { Text(stringResource(R.string.automatic_backup_description)) },
+                        icon = painterResource(R.drawable.backup),
+                        trailingContent = {
+                            Switch(
+                                checked = autoBackupEnabled,
+                                onCheckedChange = onAutoBackupEnabledChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (autoBackupEnabled) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                }
+                            )
+                        },
+                        onClick = { onAutoBackupEnabledChange(!autoBackupEnabled) },
+                    ),
+                    Material3SettingsItem(
+                        title = { Text(stringResource(R.string.automatic_backup_frequency)) },
+                        description = {
+                            Text(
+                                stringResource(
+                                    when (autoBackupFrequencyValue) {
+                                        AutoBackupFrequency.DAILY -> R.string.automatic_backup_daily
+                                        AutoBackupFrequency.WEEKLY -> R.string.automatic_backup_weekly
+                                        AutoBackupFrequency.MONTHLY -> R.string.automatic_backup_monthly
+                                    }
+                                )
+                            )
+                        },
+                        icon = painterResource(R.drawable.timer),
+                        enabled = autoBackupEnabled,
+                        onClick = {
+                            if (autoBackupEnabled) showAutoBackupFrequencyDialog = true
+                        },
+                    ),
+                    Material3SettingsItem(
+                        title = { Text(stringResource(R.string.automatic_backup_restore)) },
+                        description = { Text(stringResource(R.string.automatic_backup_restore_desc)) },
+                        icon = painterResource(R.drawable.restore),
+                        onClick = {
+                            coroutineScope.launch {
+                                val files =
+                                    withContext(Dispatchers.IO) {
+                                        File(context.filesDir, BackupArchive.BACKUP_DIRECTORY)
+                                            .listFiles { file -> file.isFile && file.extension == "zip" }
+                                            .orEmpty()
+                                            .sortedByDescending(File::lastModified)
+                                    }
+                                automaticBackups = files
+                                if (files.isEmpty()) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.automatic_backup_restore_empty,
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                } else {
+                                    showAutomaticBackupDialog = true
+                                }
+                            }
+                        },
+                    ),
+                ),
+        )
+
+        Spacer(Modifier.height(8.dp))
+
         Material3SettingsGroup(
             items =
                 listOf(

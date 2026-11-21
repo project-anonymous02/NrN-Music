@@ -6,6 +6,7 @@
 package com.metrolist.music.utils
 
 import com.metrolist.lastfm.LastFM
+import com.metrolist.music.api.ListenBrainz
 import com.metrolist.music.models.MediaMetadata
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -25,6 +26,10 @@ class ScrobbleManager(
     private var songStartedAt: Long = 0L
     private var songStarted = false
     var useNowPlaying = true
+    var scrobbleToLastFm = true
+    var scrobbleToListenBrainz = false
+    var listenBrainzToken: String? = null
+    var listenBrainzUseNowPlaying = true
 
     fun destroy() {
         scrobbleJob?.cancel()
@@ -39,7 +44,7 @@ class ScrobbleManager(
         songStartedAt = System.currentTimeMillis() / 1000
         songStarted = true
         startScrobbleTimer(metadata, duration)
-        if (useNowPlaying) {
+        if (shouldSendNowPlaying()) {
             updateNowPlaying(metadata)
         }
     }
@@ -106,26 +111,61 @@ class ScrobbleManager(
         scrobbleRemainingMillis = 0
     }
 
+    private fun shouldSendNowPlaying(): Boolean =
+        (scrobbleToLastFm && useNowPlaying) ||
+            (scrobbleToListenBrainz && listenBrainzUseNowPlaying && !listenBrainzToken.isNullOrBlank())
+
     private fun scrobbleSong(metadata: MediaMetadata) {
-        scope.launch {
-            LastFM.scrobble(
-                artist = metadata.artists.joinToString { it.name },
-                track = metadata.title,
-                duration = metadata.duration,
-                timestamp = songStartedAt,
-                album = metadata.album?.title,
-            )
+        val artist = metadata.artists.joinToString { it.name }
+        if (scrobbleToLastFm) {
+            scope.launch {
+                LastFM.scrobble(
+                    artist = artist,
+                    track = metadata.title,
+                    duration = metadata.duration,
+                    timestamp = songStartedAt,
+                    album = metadata.album?.title,
+                )
+            }
+        }
+        val token = listenBrainzToken
+        if (scrobbleToListenBrainz && !token.isNullOrBlank()) {
+            scope.launch {
+                ListenBrainz.scrobble(
+                    token = token,
+                    artist = artist,
+                    track = metadata.title,
+                    duration = metadata.duration,
+                    timestamp = songStartedAt,
+                    album = metadata.album?.title,
+                )
+            }
         }
     }
 
     private fun updateNowPlaying(metadata: MediaMetadata) {
-        scope.launch {
-            LastFM.updateNowPlaying(
-                artist = metadata.artists.joinToString { it.name },
-                track = metadata.title,
-                album = metadata.album?.title,
-                duration = metadata.duration
-            )
+        val artist = metadata.artists.joinToString { it.name }
+        if (scrobbleToLastFm && useNowPlaying) {
+            scope.launch {
+                LastFM.updateNowPlaying(
+                    artist = artist,
+                    track = metadata.title,
+                    album = metadata.album?.title,
+                    duration = metadata.duration
+                )
+            }
+        }
+        val token = listenBrainzToken
+        if (scrobbleToListenBrainz && listenBrainzUseNowPlaying && !token.isNullOrBlank()) {
+            scope.launch {
+                ListenBrainz.updateNowPlaying(
+                    token = token,
+                    artist = artist,
+                    track = metadata.title,
+                    album = metadata.album?.title,
+                    duration = metadata.duration
+                )
+            }
         }
     }
 

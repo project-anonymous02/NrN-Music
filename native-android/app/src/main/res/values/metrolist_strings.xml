@@ -170,6 +170,9 @@
     <string name="skip_silence_desc">Fast-forward through silent parts of songs</string>
     <string name="skip_silence_instant">Instantly skip silence</string>
     <string name="skip_silence_instant_desc">Jump ahead during silent moments instead of speeding up playback</string>
+    <string name="sponsorblock_podcasts">SponsorBlock (podcasts)</string>
+    <string name="sponsorblock_podcasts_description">Skip sponsors, self-promotion and interaction reminders in podcast episodes only. (https://sponsor.ajay.app)</string>
+    <string name="sponsorblock_skipped">Skipped promotional segment</string>
 
     <string name="advanced_login">Log in with token</string>
     <string name="token_hidden">Tap to show token</string>
@@ -415,6 +418,36 @@
     <string name="last_fm_send_likes">Sync Loved and Unloved</string>
     <string name="last_fm_send_likes_description">Love or unlove songs in Last.fm when you like or unlike them in NrNMusic</string>
     <string name="logging_in">Logging in…</string>
+
+    <!-- ListenBrainz -->
+    <string name="listenbrainz_integration">ListenBrainz</string>
+    <string name="listenbrainz_connect_title">Connect ListenBrainz</string>
+    <string name="listenbrainz_connect_token">Connect with a ListenBrainz user token</string>
+    <string name="listenbrainz_user_token">User token</string>
+    <string name="listenbrainz_open_settings">Open ListenBrainz settings</string>
+    <string name="listenbrainz_enable_description">Submit played tracks to ListenBrainz</string>
+    <string name="listenbrainz_now_playing">Send Now Playing status</string>
+    <string name="listenbrainz_now_playing_description">Show the currently playing track on ListenBrainz</string>
+    <string name="listenbrainz_connected_as">Connected as %1$s</string>
+    <string name="listenbrainz_connect_failed">Connection failed</string>
+    <string name="scrobble_create_account">Create an account</string>
+
+    <!-- Automatic backups -->
+    <string name="automatic_backup">Automatic backup</string>
+    <string name="automatic_backup_description">Save a local backup automatically and keep the 10 most recent copies.</string>
+    <string name="automatic_backup_frequency">Backup frequency</string>
+    <string name="automatic_backup_daily">Daily</string>
+    <string name="automatic_backup_weekly">Weekly</string>
+    <string name="automatic_backup_monthly">Monthly</string>
+    <string name="automatic_backup_restore">Restore an automatic backup</string>
+    <string name="automatic_backup_restore_desc">Choose a saved automatic backup to restore.</string>
+    <string name="automatic_backup_restore_empty">No automatic backups are available.</string>
+
+    <!-- Lyrics providers -->
+    <string name="enable_lrcred">Enable lrc.red</string>
+    <string name="enable_lrcred_desc">Fetch synced lyrics from the lrc.red community database</string>
+    <string name="enable_simpmusic">Enable SimpMusic</string>
+    <string name="enable_simpmusic_desc">Fetch synced lyrics from the SimpMusic lyrics API</string>
 
     <string name="scrobbling_configuration">Scrobbling configuration</string>
     <string name="scrobble_min_track_duration">Scrobble songs longer than (seconds)</string>

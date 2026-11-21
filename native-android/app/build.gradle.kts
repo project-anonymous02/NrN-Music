@@ -297,6 +297,8 @@ dependencies {
     implementation(libs.hilt)
     ksp(libs.hilt.compiler)
 
+    implementation(libs.work.runtime.ktx)
+
     implementation(project(":innertube"))
 
     implementation(libs.ktor.client.core)

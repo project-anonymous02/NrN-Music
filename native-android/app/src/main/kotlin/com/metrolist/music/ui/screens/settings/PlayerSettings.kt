@@ -66,6 +66,7 @@ import com.metrolist.music.constants.ShufflePlaylistFirstKey
 import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
+import com.metrolist.music.constants.SponsorBlockEnabledKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
 import com.metrolist.music.constants.VarispeedKey
 import com.metrolist.music.ui.component.DefaultDialog
@@ -121,6 +122,10 @@ fun PlayerSettings(
     )
     val (skipSilenceInstant, onSkipSilenceInstantChange) = rememberPreference(
         SkipSilenceInstantKey,
+        defaultValue = false
+    )
+    val (sponsorBlockEnabled, onSponsorBlockEnabledChange) = rememberPreference(
+        SponsorBlockEnabledKey,
         defaultValue = false
     )
     val (audioNormalization, onAudioNormalizationChange) = rememberPreference(
@@ -415,6 +420,27 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { if (skipSilence) onSkipSilenceInstantChange(!skipSilenceInstant) }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.fast_forward),
+                    title = { Text(stringResource(R.string.sponsorblock_podcasts)) },
+                    description = { Text(stringResource(R.string.sponsorblock_podcasts_description)) },
+                    trailingContent = {
+                        Switch(
+                            checked = sponsorBlockEnabled,
+                            onCheckedChange = onSponsorBlockEnabledChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (sponsorBlockEnabled) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onSponsorBlockEnabledChange(!sponsorBlockEnabled) }
                 ))
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.volume_up),

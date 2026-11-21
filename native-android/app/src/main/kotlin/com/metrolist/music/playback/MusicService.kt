@@ -141,6 +141,9 @@ import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.HistoryDuration
 import com.metrolist.music.constants.LastFMUseNowPlaying
+import com.metrolist.music.constants.EnableListenBrainzScrobblingKey
+import com.metrolist.music.constants.ListenBrainzTokenKey
+import com.metrolist.music.constants.ListenBrainzUseNowPlaying
 import com.metrolist.music.constants.MediaSessionConstants
 import com.metrolist.music.constants.MediaSessionConstants.CommandAddToTargetPlaylist
 import com.metrolist.music.constants.MediaSessionConstants.CommandToggleLike
@@ -165,6 +168,7 @@ import com.metrolist.music.constants.ShufflePlaylistFirstKey
 import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
+import com.metrolist.music.constants.SponsorBlockEnabledKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.Event
@@ -468,6 +472,9 @@ class MusicService :
     private var latestMediaNotification: Notification? = null
 
     private var scrobbleManager: ScrobbleManager? = null
+
+    @Volatile
+    private var sponsorBlockEnabled = false
 
     val automixItems = MutableStateFlow<List<MediaItem>>(emptyList())
 
@@ -1095,11 +1102,20 @@ class MusicService :
         }
 
         dataStore.data
-            .map { it[EnableLastFMScrobblingKey] ?: false }
+            .map { prefs ->
+                Triple(
+                    prefs[EnableLastFMScrobblingKey] ?: false,
+                    prefs[EnableListenBrainzScrobblingKey] ?: false,
+                    prefs[ListenBrainzTokenKey].orEmpty(),
+                )
+            }
             .debounce(300)
             .distinctUntilChanged()
-            .collect(scope) { enabled ->
-                if (enabled && scrobbleManager == null) {
+            .collect(scope) { (lastFmEnabled, listenBrainzEnabled, listenBrainzToken) ->
+                val listenBrainzReady = listenBrainzEnabled && listenBrainzToken.isNotBlank()
+                val shouldRun = lastFmEnabled || listenBrainzReady
+
+                if (shouldRun && scrobbleManager == null) {
                     val delayPercent = dataStore.get(ScrobbleDelayPercentKey, LastFM.DEFAULT_SCROBBLE_DELAY_PERCENT)
                     val minSongDuration =
                         dataStore.get(ScrobbleMinSongDurationKey, LastFM.DEFAULT_SCROBBLE_MIN_SONG_DURATION)
@@ -1111,10 +1127,19 @@ class MusicService :
                             scrobbleDelayPercent = delayPercent,
                             scrobbleDelaySeconds = delaySeconds,
                         )
-                    scrobbleManager?.useNowPlaying = dataStore.get(LastFMUseNowPlaying, false)
-                } else if (!enabled && scrobbleManager != null) {
+                }
+
+                if (!shouldRun && scrobbleManager != null) {
                     scrobbleManager?.destroy()
                     scrobbleManager = null
+                }
+
+                scrobbleManager?.apply {
+                    scrobbleToLastFm = lastFmEnabled
+                    scrobbleToListenBrainz = listenBrainzReady
+                    this.listenBrainzToken = listenBrainzToken.takeIf { it.isNotBlank() }
+                    useNowPlaying = dataStore.get(LastFMUseNowPlaying, false)
+                    listenBrainzUseNowPlaying = dataStore.get(ListenBrainzUseNowPlaying, true)
                 }
             }
 
@@ -1123,6 +1148,13 @@ class MusicService :
             .distinctUntilChanged()
             .collectLatest(scope) {
                 scrobbleManager?.useNowPlaying = it
+            }
+
+        dataStore.data
+            .map { it[ListenBrainzUseNowPlaying] ?: true }
+            .distinctUntilChanged()
+            .collectLatest(scope) {
+                scrobbleManager?.listenBrainzUseNowPlaying = it
             }
 
         dataStore.data
@@ -1140,6 +1172,70 @@ class MusicService :
                     it.scrobbleDelaySeconds = delaySeconds
                 }
             }
+
+        dataStore.data
+            .map { it[SponsorBlockEnabledKey] ?: false }
+            .distinctUntilChanged()
+            .collect(scope) {
+                sponsorBlockEnabled = it
+            }
+
+        scope.launch {
+            var currentVideoId: String? = null
+            var segments: List<SponsorBlockSegment> = emptyList()
+            var pendingTarget: Long? = null
+
+            while (isActive) {
+                delay(500)
+
+                if (!sponsorBlockEnabled ||
+                    !::player.isInitialized ||
+                    castConnectionHandler?.isCasting?.value == true
+                ) {
+                    currentVideoId = null
+                    segments = emptyList()
+                    pendingTarget = null
+                    continue
+                }
+
+                val metadata = player.currentMetadata
+                if (metadata == null ||
+                    !metadata.isEpisode ||
+                    metadata.id.startsWith("local_") ||
+                    !metadata.uploadEntityId.isNullOrBlank()
+                ) {
+                    currentVideoId = null
+                    segments = emptyList()
+                    pendingTarget = null
+                    continue
+                }
+
+                if (metadata.id != currentVideoId) {
+                    currentVideoId = metadata.id
+                    segments = emptyList()
+                    pendingTarget = null
+                    segments = SponsorBlockClient.shared.segments(metadata.id)
+                }
+
+                if (!player.isPlaying || segments.isEmpty()) {
+                    pendingTarget = null
+                    continue
+                }
+
+                val target = segments.skipTarget(player.currentPosition, player.duration)
+                if (target == null) {
+                    pendingTarget = null
+                } else if (target != pendingTarget) {
+                    pendingTarget = target
+                    player.seekTo(target)
+                    Toast.makeText(
+                        this@MusicService,
+                        getString(R.string.sponsorblock_skipped),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
+        }
 
         combine(
             dataStore.data.map { prefs ->
