@@ -740,7 +740,7 @@
     <string name="crossfade_gapless">끊김 없는 앨범(Gapless) 비활성화</string>
     <string name="crossfade_gapless_desc">트랙 간 끊김 없이 재생되도록 디자인된 앨범에서는 크로스페이드를 건너뜁니다</string>
     <string name="none">없음</string>
-    <string name="wrapped_special_thanks">NrNMusic를 제작한 MO Agamy에게 특별한 감사를 전합니다</string>
+    <string name="wrapped_special_thanks">Metrolist를 제작한 MO Agamy에게 특별한 감사를 전합니다</string>
     <string name="wrapped_create_playlist">재생목록 만들기</string>
     <string name="wrapped_playlist_saved">재생목록이 저장되었습니다</string>
     <plurals name="band_count">

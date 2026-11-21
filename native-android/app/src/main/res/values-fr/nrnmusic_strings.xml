@@ -235,7 +235,7 @@
     <string name="wrapped_ready_title">VOTRE CADEAU EST PRÊT À ÊTRE DÉVOILÉ !</string>
     <string name="wrapped_ready_subtitle">C\'est le moment de découvrir ce que vous avez aimé tout au long de cette année…</string>
     <string name="wrapped_thank_you">Merci de votre écoute !</string>
-    <string name="wrapped_special_thanks">Remerciements particuliers à MO Agamy pour la création de NrNMusic</string>
+    <string name="wrapped_special_thanks">Remerciements particuliers à MO Agamy pour la création de Metrolist</string>
     <string name="wrapped_close">Fermer le résumé</string>
     <string name="wrapped_playlist_title">Votre %s en résumé</string>
     <string name="wrapped_create_playlist">Créer une playlist</string>

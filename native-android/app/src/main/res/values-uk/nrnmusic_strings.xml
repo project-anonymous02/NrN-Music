@@ -239,7 +239,7 @@
     <string name="wrapped_ready_title">ВАШ АУДІОПІДСУМОК ЗА РІК ГОТОВИЙ!</string>
     <string name="wrapped_ready_subtitle">Час подивитися, що вам сподобалося цього року…</string>
     <string name="wrapped_thank_you">Дякую, що вислухали!</string>
-    <string name="wrapped_special_thanks">Особлива подяка MO Agamy за створення NrNMusic</string>
+    <string name="wrapped_special_thanks">Особлива подяка MO Agamy за створення Metrolist</string>
     <string name="wrapped_close">Закрити обгорнуте</string>
     <string name="wrapped_playlist_title">Ваш Wrapped %s</string>
     <string name="wrapped_create_playlist">Створити список відтворення</string>

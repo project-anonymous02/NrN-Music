@@ -233,7 +233,7 @@
     <string name="wrapped_ready_title">ÖZETİN HAZIR!</string>
     <string name="wrapped_ready_subtitle">Bu yıl neleri sevdiğini görme zamanı…</string>
     <string name="wrapped_thank_you">Dinlediğin için teşekkürler!</string>
-    <string name="wrapped_special_thanks">NrNMusic\'i oluşturduğu için MO Agamy\'ye özel teşekkürler</string>
+    <string name="wrapped_special_thanks">Metrolist\'i oluşturduğu için MO Agamy\'ye özel teşekkürler</string>
     <string name="wrapped_close">Özeti kapat</string>
     <string name="wrapped_playlist_title">%s Özetin</string>
     <string name="wrapped_create_playlist">Oynatma listesi oluştur</string>
