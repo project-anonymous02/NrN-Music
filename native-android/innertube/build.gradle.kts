@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.metrolist.innertube"
+    namespace = "com.nrnmusic.innertube"
     compileSdk {
         version = release(37) {
             minorApiLevel = 0

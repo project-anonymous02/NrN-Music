@@ -14,5 +14,5 @@
         path="." />
     <external-files-path
         name="external_files_documents"
-        path="Documents/MetrolistExports/" />
+        path="Documents/NrNMusicExports/" />
 </paths>
